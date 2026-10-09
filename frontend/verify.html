@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Buyer Payment Proof & Verification — TrustCheck</title>
+  <meta name="description" content="Submit and cross-verify your payment screenshot with your seller's referral code. No login required.">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .buyer-container {
+      max-width: 860px;
+      margin: 2rem auto;
+      padding: 0 1.25rem;
+    }
+    .buyer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding: 1rem 1.25rem;
+      background: #FFFFFF;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 16px rgba(17, 24, 39, 0.05);
+    }
+  </style>
+</head>
+<body>
+<div class="buyer-container">
+  <!-- Nav header -->
+  <header class="buyer-header">
+    <a href="/" style="display:flex;align-items:center;gap:0.75rem;text-decoration:none;">
+      <span class="brand-mark">✓</span>
+      <div>
+        <div class="logo-text">TrustCheck</div>
+        <div class="logo-tagline">Buyer Payment Submission</div>
+      </div>
+    </a>
+    <div>
+      <a href="/login.html" class="button button-secondary" style="font-size:0.84rem;">Are you a Seller? Sign In</a>
+    </div>
+  </header>
+
+  <div class="alert alert-info" style="margin-bottom:1.5rem;">
+    <span>🛡️</span>
+    <span><strong>No Account Needed:</strong> Buyers can submit their payment receipt directly to their merchant. Enter the seller's code (e.g. <code>SL-AURA-7K9M</code>) or your order code (<code>TC-7K9M4Q2X</code>), your UTR reference, and screenshot.</span>
+  </div>
+
+  <!-- Verification Card -->
+  <div class="card">
+    <h2 style="font-size:1.4rem;margin-bottom:0.4rem;">Submit Payment Details</h2>
+    <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.25rem;">
+      Verify the payee details against your seller's profile and notify them of your transfer.
+    </p>
+
+    <div id="verify-error" class="alert alert-error hidden"></div>
+    <div id="verify-success-banner" class="alert alert-ok hidden" style="margin-bottom:1rem;">
+      <span>✓</span>
+      <span><strong>Submission Received:</strong> Your payment proof was processed and attached to the seller's order record. The seller will verify receipt in their bank app before dispatching.</span>
+    </div>
+
+    <form id="verify-form" novalidate>
+      <div class="form-group">
+        <label class="form-label">Seller Code or Order Referral Code <span class="required">*</span></label>
+        <input class="form-input mono" type="text" id="verify-code" placeholder="e.g. SL-AURA-7K9M or TC-7K9M4Q2X" style="font-size:1.1rem;letter-spacing:0.05em;" required>
+        <div class="form-hint">Enter either your seller's master code from their bio or the specific order code they sent you.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Bank Reference / UPI UTR / Transaction ID</label>
+        <input class="form-input mono" type="text" id="verify-txid" placeholder="e.g. 320145678912 or T2409...">
+        <div class="form-hint">The 12-digit UPI reference number or transaction ID shown in your payment app.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Screenshot <span style="color:var(--text-muted);">(optional for automated OCR verification)</span></label>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="screenshot-input" accept="image/jpeg,image/png,image/webp">
+          <div class="upload-icon">📸</div>
+          <div class="upload-label">Click to upload or drag & drop payment receipt</div>
+          <div class="upload-hint">JPEG, PNG, or WebP · In-memory OCR analysis</div>
+        </div>
+        <div class="upload-preview hidden" id="img-preview"><img id="preview-img" src="" alt="Preview"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg" id="verify-btn">
+        Submit & Verify Payment Proof
+      </button>
+    </form>
+  </div>
+
+  <!-- Result Section -->
+  <!-- Result Section -->
+  <div id="result-section" class="hidden" style="margin-top:1.5rem;">
+    <!-- Unique Transaction ID Card to Share with Seller -->
+    <div class="card" id="txid-card" style="border: 2px solid var(--accent-color); background: rgba(59, 130, 246, 0.08); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:600;">
+            Receipt Verification ID (Send to Seller)
+          </div>
+          <div style="font-size:1.75rem; font-weight:700; font-family:monospace; color:var(--accent-color); letter-spacing:0.04em; margin-top:0.25rem;" id="res-verification-txid">
+            —
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.35rem; margin-bottom:0;">
+            Give this unique Transaction ID to your seller so they can instantly confirm your order.
+          </p>
+        </div>
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-txid">📋 Copy ID</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-share-whatsapp" style="background:#25D366; border-color:#25D366; color:#fff;">
+            💬 Share with Seller
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Risk / Verification status -->
+    <div class="risk-panel" id="risk-panel">
+      <div class="risk-header" id="risk-header">
+        <div class="risk-score-ring" id="risk-score-ring">—</div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.2rem;">Receipt Verification Analysis</div>
+          <div class="risk-verdict-badge" id="risk-verdict">—</div>
+        </div>
+        <div id="dup-warning" class="hidden" style="margin-left:auto;">
+          <span class="badge badge-suspicious">⚠️ Duplicate Transaction Reference</span>
+        </div>
+      </div>
+      <div class="risk-reasons" id="risk-reasons"></div>
+      <div class="risk-disclaimer" id="risk-disclaimer"></div>
+    </div>
+
+    <!-- Extracted OCR & Comparison Table -->
+    <div class="card" style="margin-top:1rem;">
+      <h4 style="margin-bottom:0.75rem;">Verified Transaction Signals</h4>
+      <div class="compare-grid">
+        <div class="compare-col-header">Order / Merchant Details</div>
+        <div class="compare-col-header">Extracted from Receipt</div>
+      </div>
+      <div id="compare-body"></div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;background:var(--color-ok-bg);border-color:rgba(16,185,129,0.25);">
+      <h4 style="color:var(--color-ok);margin-bottom:0.25rem;">Next Steps for Delivery</h4>
+      <p style="font-size:0.875rem;color:var(--text-secondary);">
+        Your transaction proof is recorded. Share your Verification Transaction ID with the seller so they can cross-check their bank account and dispatch your item.
+      </p>
+    </div>
+  </div>
+
+  <footer style="margin-top:3rem;text-align:center;font-size:0.8rem;color:var(--text-muted);padding-bottom:2rem;">
+    TrustCheck Digital Trust Platform · Zero raw image storage · Risk estimate only, not proof of payment.
+  </footer>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+(() => {
+  function formatCurrency(val) {
+    if (val == null || isNaN(val) || val === '') return '—';
+    return '₹' + Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Pre-fill code from URL if present (?code=SL-AURA-7K9M)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('code')) document.getElementById('verify-code').value = params.get('code');
+
+  const input = document.getElementById('screenshot-input');
+  const preview = document.getElementById('img-preview');
+  const previewImg = document.getElementById('preview-img');
+  const zone = document.getElementById('upload-zone');
+  const form = document.getElementById('verify-form');
+  const errEl = document.getElementById('verify-error');
+  const successBanner = document.getElementById('verify-success-banner');
+  const btn = document.getElementById('verify-btn');
+  const resultSec = document.getElementById('result-section');
+
+  input.addEventListener('change', () => {
+    if (input.files[0]) {
+      previewImg.src = URL.createObjectURL(input.files[0]);
+      preview.classList.remove('hidden');
+    }
+  });
+
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) {
+      input.files = e.dataTransfer.files;
+      previewImg.src = URL.createObjectURL(e.dataTransfer.files[0]);
+      preview.classList.remove('hidden');
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errEl.classList.add('hidden');
+    successBanner.classList.add('hidden');
+
+    const code = document.getElementById('verify-code').value.trim();
+    const txId = document.getElementById('verify-txid').value.trim();
+    const file = input.files[0];
+
+    if (!code) {
+      errEl.textContent = 'Please enter your referral code (seller code SL-XXXX-XXXX or order code TC-XXXXXXXX).';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Analysing with OCR & Submitting…';
+
+    try {
+      const fd = new FormData();
+      fd.append('order_referral_code', code);
+      if (txId) fd.append('submitted_tx_id', txId);
+      if (file) fd.append('screenshot', file);
+
+      // Call public cross-verify without authentication
+      const result = await api.crossVerify(fd);
+      renderResult(result);
+      successBanner.classList.remove('hidden');
+      resultSec.classList.remove('hidden');
+      resultSec.scrollIntoView({ behavior: 'smooth' });
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Submit & Verify Payment Proof';
+    }
+  });
+
+  function renderResult(result) {
+    const risk = result.risk;
+    const scoreRing = document.getElementById('risk-score-ring');
+    const verdictEl = document.getElementById('risk-verdict');
+    const panel = document.getElementById('risk-panel');
+
+    scoreRing.textContent = risk.score;
+    verdictEl.textContent = risk.verdict.charAt(0).toUpperCase() + risk.verdict.slice(1);
+    verdictEl.className = `risk-verdict-badge verdict-${risk.verdict}`;
+    panel.className = `risk-panel risk-${risk.verdict}`;
+
+    // Unique Transaction ID setup
+    const txId = result.verification_tx_id || result.order_referral_code || 'TXN-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+    document.getElementById('res-verification-txid').textContent = txId;
+
+    document.getElementById('btn-copy-txid').onclick = () => {
+      navigator.clipboard.writeText(txId).then(() => {
+        showToast('Transaction ID copied: ' + txId, 'ok');
+      });
+    };
+
+    document.getElementById('btn-share-whatsapp').onclick = () => {
+      const msg = `Hi! I have submitted my payment proof on TrustCheck.\nVerification Transaction ID: ${txId}\nOrder Ref: ${result.order_referral_code}\nPlease check and confirm my order!`;
+      window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+    };
+
+    // Reasons
+    const reasonsEl = document.getElementById('risk-reasons');
+    reasonsEl.innerHTML = risk.reasons.map(r => `
+      <div class="risk-reason ${r.level}">
+        <span class="risk-reason-icon">${r.level === 'ok' ? '✓' : r.level === 'error' ? '✕' : '⚠️'}</span>
+        <span>${escapeHtml(r.text)}</span>
+      </div>
+    `).join('');
+
+    document.getElementById('risk-disclaimer').textContent = risk.disclaimer || 'Risk estimate only — not proof of payment.';
+
+    // Duplicate indicator
+    const dupWarning = document.getElementById('dup-warning');
+    if (result.duplicate_warning) {
+      dupWarning.classList.remove('hidden');
+    } else {
+      dupWarning.classList.add('hidden');
+    }
+
+    // Comparison rows
+    const ext = result.extracted_fields || result.extracted || {};
+    const comp = result.comparison || {};
+    const expAmount = result.expected_amount != null ? result.expected_amount : comp.expected_amount;
+    const expName = result.expected_payee_name || comp.expected_payee_name;
+    const expUpi = result.expected_upi_id || comp.expected_upi_id;
+
+    const amountMatch = ext.amount != null && expAmount != null && Math.abs(ext.amount - expAmount) < 0.01;
+    const nameMatch = ext.payee_name && expName && (
+      ext.payee_name.toLowerCase().includes(expName.toLowerCase().substring(0, 4)) ||
+      expName.toLowerCase().includes(ext.payee_name.toLowerCase().substring(0, 4))
+    );
+
+    const rows = [
+      {
+        label: 'Amount',
+        exp: expAmount != null && expAmount > 0 ? formatCurrency(expAmount) : 'Pending Confirmation',
+        ext: ext.amount != null ? formatCurrency(ext.amount) : 'Not detected',
+        match: amountMatch ? true : (ext.amount != null && expAmount != null && expAmount > 0 ? false : null)
+      },
+      {
+        label: 'Payee Name',
+        exp: expName || '—',
+        ext: ext.payee_name || 'Not detected',
+        match: nameMatch ? true : (ext.payee_name && expName ? false : null)
+      },
+      {
+        label: 'Payee UPI ID',
+        exp: expUpi || '—',
+        ext: ext.payee_upi_id || '—',
+        match: ext.payee_upi_id && expUpi && ext.payee_upi_id.toLowerCase() === expUpi.toLowerCase() ? true : null
+      },
+      {
+        label: 'Transaction ID / UTR',
+        exp: txId,
+        ext: ext.tx_id || ext.utr || result.submitted_tx_id || '—',
+        match: null
+      },
+      {
+        label: 'App Detected',
+        exp: '—',
+        ext: ext.app_indicator ? ext.app_indicator.toUpperCase() : '—',
+        match: null
+      },
+    ];
+
+    document.getElementById('compare-body').innerHTML = rows.map(r => `
+      <div class="compare-row">
+        <div class="compare-cell">
+          <div class="compare-cell-label">${r.label} (Expected / Reference)</div>
+          <div class="compare-cell-val">${escapeHtml(r.exp)}</div>
+        </div>
+        <div class="compare-cell">
+          <div class="compare-cell-label">${r.label} (From Receipt)</div>
+          <div class="compare-cell-val" style="display:flex;align-items:center;gap:0.4rem;">
+            ${escapeHtml(r.ext)}
+            ${r.match === true ? '<span style="color:var(--color-ok);">✓</span>' : r.match === false ? '<span style="color:var(--color-error);">✕</span>' : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+  }
+})();
+</script>
+</body>
+</html>

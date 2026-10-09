@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products & Photo Certificates — TrustCheck</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">TC</div>
+      <div>
+        <div class="logo-text">TrustCheck</div>
+        <div class="logo-tagline">Digital Trust Platform</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" data-page="orders" href="/orders.html"><span class="nav-icon">📋</span>Orders</a>
+      <a class="nav-item" data-page="verify" href="/verify-payment.html"><span class="nav-icon">🔍</span>Verify Payment</a>
+      <span class="nav-section-label">Products</span>
+      <a class="nav-item" data-page="products" href="/products.html"><span class="nav-icon">📦</span>Products</a>
+      <span class="nav-section-label">Account</span>
+      <a class="nav-item" data-page="profile" href="/profile.html"><span class="nav-icon">👤</span>Profile & Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="seller-info">
+        <div class="seller-avatar" id="sidebar-avatar">?</div>
+        <div>
+          <div class="seller-name" id="sidebar-name">—</div>
+          <div class="seller-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="mobile-nav-bar">
+      <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+      <div class="logo-text">TrustCheck</div>
+    </div>
+
+    <div class="page-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
+        <div>
+          <h1 class="page-title">📦 Products & Photo Certificates</h1>
+          <p class="page-subtitle">Timestamp and cryptographically fingerprint your original product photos on an append-only ledger</p>
+        </div>
+        <button class="btn btn-primary btn-sm" id="toggle-add-btn">+ New Product</button>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Ledger Integrity Banner -->
+      <div class="card" style="margin-bottom:1.5rem;background:var(--bg-card);border:1px solid var(--border-color);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;">
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <div style="font-size:1.5rem;">⛓️</div>
+            <div>
+              <div style="font-weight:600;display:flex;align-items:center;gap:0.5rem;">
+                Immutable Audit Ledger
+                <span id="ledger-badge" class="badge badge-pending">Verifying...</span>
+              </div>
+              <div style="font-size:0.8rem;color:var(--text-secondary);" id="ledger-status-text">
+                Checking hash-linked cryptographic chain...
+              </div>
+            </div>
+          </div>
+          <div style="font-size:0.85rem;color:var(--text-muted);font-family:var(--font-mono);" id="ledger-stats">
+            Blocks: <span id="ledger-block-count">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Product Panel (Collapsed by default) -->
+      <div id="add-product-panel" class="card hidden" style="margin-bottom:1.5rem;border-color:var(--border-active);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
+          <h3>Add New Product</h3>
+          <button class="btn btn-ghost btn-sm" id="close-add-panel">✕ Cancel</button>
+        </div>
+        <div id="create-error" class="alert alert-error hidden"></div>
+        <form id="create-product-form" novalidate>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));gap:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="prod-name">Product Name <span class="required">*</span></label>
+              <input class="form-input" type="text" id="prod-name" placeholder="e.g. Handmade Silk Scarf" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prod-price">Price (₹) <span class="required">*</span></label>
+              <input class="form-input" type="number" id="prod-price" placeholder="e.g. 1499.00" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="prod-desc">Description</label>
+            <textarea class="form-input" id="prod-desc" rows="2" placeholder="Brief description of the product..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary" id="save-product-btn">Create Product</button>
+        </form>
+      </div>
+
+      <!-- Products List Card -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:0.75rem;">
+          <h3>Product Catalogue</h3>
+          <span style="font-size:0.85rem;color:var(--text-secondary);"><span id="product-count">0</span> products registered</span>
+        </div>
+
+        <div class="table-container">
+          <table class="table" id="products-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Certificates</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-tbody">
+              <tr>
+                <td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">
+                  Loading products...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Photo Certificate Modal / Upload Section -->
+      <div id="certify-modal" class="card hidden" style="margin-top:2rem;border-color:var(--brand-primary);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <div>
+            <h3 id="certify-modal-title">Certify Product Photo</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);" id="certify-product-name"></p>
+          </div>
+          <button class="btn btn-ghost btn-sm" id="close-certify-modal">✕ Close</button>
+        </div>
+
+        <div class="alert alert-info" style="margin-bottom:1.25rem;">
+          <span>📸</span>
+          <span>Uploading this photo calculates a cryptographic SHA-256 digest, a perceptual pHash for visual similarity, and commits an immutable event to the hash-linked ledger.</span>
+        </div>
+
+        <div id="cert-upload-error" class="alert alert-error hidden"></div>
+
+        <form id="cert-upload-form">
+          <input type="hidden" id="cert-product-id">
+          <div class="form-group">
+            <label class="form-label">Select Original High-Resolution Photo <span class="required">*</span></label>
+            <div class="upload-zone" id="cert-upload-zone">
+              <input type="file" id="cert-file-input" accept="image/jpeg,image/png,image/webp" required>
+              <div class="upload-icon">📷</div>
+              <div class="upload-label">Click or drag & drop product photo</div>
+              <div class="upload-hint">JPEG, PNG, or WebP · Max 5 MB</div>
+            </div>
+            <div class="upload-preview hidden" id="cert-preview"><img id="cert-preview-img" src="" alt="Preview"></div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="cert-submit-btn">Compute Fingerprint & Add to Ledger</button>
+        </form>
+
+        <!-- Certificate Result Details -->
+        <div id="cert-result-box" class="card hidden" style="margin-top:1.5rem;background:var(--bg-input);border:1px solid rgba(16,185,129,0.3);">
+          <div style="display:flex;align-items:center;gap:0.5rem;color:var(--color-ok);margin-bottom:0.75rem;font-weight:600;">
+            <span>✓</span> Photo Cryptographically Certified & Recorded
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:0.75rem;font-size:0.85rem;">
+            <div>
+              <div style="color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;">Certificate ID</div>
+              <div class="mono" id="res-cert-id" style="color:var(--brand-secondary);word-break:break-all;"></div>
+            </div>
+            <div>
+              <div style="color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;">Dimensions / Size</div>
+              <div id="res-cert-dims" style="color:var(--text-primary);"></div>
+            </div>
+            <div style="grid-column:1 / -1;">
+              <div style="color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;">SHA-256 Hash</div>
+              <div class="mono" id="res-cert-sha" style="font-size:0.75rem;color:var(--text-primary);word-break:break-all;background:rgba(0,0,0,0.3);padding:0.4rem;border-radius:4px;"></div>
+            </div>
+            <div style="grid-column:1 / -1;">
+              <div style="color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;">Perceptual Hash (pHash)</div>
+              <div class="mono" id="res-cert-phash" style="font-size:0.8rem;color:var(--color-warning);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verification Tool: Reverse Image Check -->
+      <div class="card" style="margin-top:2rem;">
+        <h3 style="margin-bottom:0.5rem;">🔍 Reverse Image Verification</h3>
+        <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.25rem;">
+          Found a duplicate image on a social media profile or imposter store? Upload it here to check for exact byte match or visual similarity against your certified original images.
+        </p>
+
+        <form id="verify-img-form">
+          <div class="form-group">
+            <div class="upload-zone" id="verify-upload-zone">
+              <input type="file" id="verify-file-input" accept="image/jpeg,image/png,image/webp" required>
+              <div class="upload-icon">🔎</div>
+              <div class="upload-label">Upload image to test for imitation or tampering</div>
+              <div class="upload-hint">JPEG, PNG, or WebP</div>
+            </div>
+            <div class="upload-preview hidden" id="verify-preview"><img id="verify-preview-img" src="" alt="Preview"></div>
+          </div>
+          <button type="submit" class="btn btn-secondary" id="verify-img-btn">Verify Against Certified Images</button>
+        </form>
+
+        <!-- Verification Result -->
+        <div id="verify-result-box" class="hidden" style="margin-top:1.5rem;">
+          <div class="risk-panel" id="verify-risk-panel">
+            <div class="risk-header">
+              <div>
+                <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;">Verification Result</div>
+                <div class="risk-verdict-badge" id="verify-verdict-badge">—</div>
+              </div>
+            </div>
+            <div style="margin-top:0.75rem;font-size:0.9rem;" id="verify-result-msg"></div>
+            <div id="verify-match-details" class="hidden" style="margin-top:1rem;background:rgba(0,0,0,0.25);padding:0.75rem;border-radius:6px;font-size:0.85rem;">
+              <div style="font-weight:600;margin-bottom:0.25rem;">Matched Certificate Details:</div>
+              <div><strong>Certificate ID:</strong> <span class="mono" id="match-cert-id"></span></div>
+              <div><strong>Filename:</strong> <span id="match-cert-file"></span></div>
+              <div><strong>SHA-256 Match:</strong> <span id="match-sha-status"></span></div>
+              <div><strong>pHash Distance:</strong> <span class="mono" id="match-phash-dist"></span></div>
+            </div>
+            <div class="risk-disclaimer">
+              Verification provides cryptographic integrity or perceptual similarity indication. It does not constitute legal proof of ownership.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/products.js"></script>
+</body>
+</html>

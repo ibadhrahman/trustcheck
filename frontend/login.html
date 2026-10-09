@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In — TrustCheck</title>
+  <meta name="description" content="Sign in to your TrustCheck seller account.">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">TC</div>
+      <div>
+        <div class="logo-text">TrustCheck</div>
+        <div class="logo-tagline">Digital Trust Platform</div>
+      </div>
+    </div>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to your seller account</p>
+
+    <div id="login-error" class="alert alert-error hidden"></div>
+
+    <form id="login-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="email">Email <span class="required">*</span></label>
+        <input class="form-input" type="email" id="email" name="email" placeholder="you@example.com" autocomplete="email" required>
+        <div class="form-error hidden" id="email-error"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password <span class="required">*</span></label>
+        <input class="form-input" type="password" id="password" name="password" placeholder="Your password" autocomplete="current-password" required>
+        <div class="form-error hidden" id="password-error"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="login-btn">
+        Sign In
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--text-secondary)">
+      Don't have an account? <a href="/register.html">Create one</a>
+    </p>
+    <p style="text-align:center;margin-top:0.5rem;"><a href="/" style="font-size:0.8rem;color:var(--text-muted)">← Back to home</a></p>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  // Redirect if already logged in
+  if (getToken()) window.location.href = '/dashboard.html';
+
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl = document.getElementById('login-error');
+    const btn = document.getElementById('login-btn');
+
+    errEl.classList.add('hidden');
+
+    if (!email) {
+      document.getElementById('email-error').textContent = 'Email is required.';
+      document.getElementById('email-error').classList.remove('hidden');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Signing in…';
+
+    try {
+      const data = await api.login({ email, password });
+      setToken(data.access_token);
+      // Load user info
+      const me = await api.me();
+      localStorage.setItem('tc_user', JSON.stringify(me));
+
+      // Redirect
+      const params = new URLSearchParams(window.location.search);
+      window.location.href = params.get('redirect') || '/dashboard.html';
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    }
+  });
+</script>
+</body>
+</html>

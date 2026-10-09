@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seller Profile & Settings — TrustCheck</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">TC</div>
+      <div>
+        <div class="logo-text">TrustCheck</div>
+        <div class="logo-tagline">Digital Trust Platform</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" data-page="orders" href="/orders.html"><span class="nav-icon">📋</span>Orders</a>
+      <a class="nav-item" data-page="verify" href="/verify-payment.html"><span class="nav-icon">🔍</span>Verify Payment</a>
+      <span class="nav-section-label">Products</span>
+      <a class="nav-item" data-page="products" href="/products.html"><span class="nav-icon">📦</span>Products</a>
+      <span class="nav-section-label">Account</span>
+      <a class="nav-item" data-page="profile" href="/profile.html"><span class="nav-icon">👤</span>Profile & Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="seller-info">
+        <div class="seller-avatar" id="sidebar-avatar">?</div>
+        <div>
+          <div class="seller-name" id="sidebar-name">—</div>
+          <div class="seller-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="mobile-nav-bar">
+      <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+      <div class="logo-text">TrustCheck</div>
+    </div>
+
+    <div class="page-header">
+      <h1 class="page-title">👤 Seller Profile & Settings</h1>
+      <p class="page-subtitle">Configure your business credentials, UPI ID, and official seller verification code</p>
+    </div>
+
+    <div class="page-body" style="max-width:860px;">
+      <!-- Seller Referral Code Card -->
+      <div class="card" style="margin-bottom:1.5rem;background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(6,182,212,0.08));border:1px solid var(--border-active);">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:1rem;">
+          <div>
+            <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.25rem;">
+              Your Master Seller Referral Code
+            </div>
+            <div class="mono" id="seller-code-display" style="font-size:1.8rem;font-weight:700;color:var(--brand-primary);letter-spacing:0.08em;">
+              SL-••••-••••
+            </div>
+            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:0.35rem;">
+              Share this permanent code in your Instagram/WhatsApp bio or stories so customers can verify your store identity.
+            </p>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="copy-seller-code-btn">📋 Copy Code</button>
+        </div>
+
+        <div style="margin-top:1rem;background:rgba(0,0,0,0.3);padding:0.75rem 1rem;border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
+          <div style="font-size:0.85rem;color:var(--text-primary);font-style:italic;" id="shareable-bio-text">
+            "Official TrustCheck Verified Seller Code: [Loading...]"
+          </div>
+          <button class="btn btn-ghost btn-sm" id="copy-bio-btn">Copy Bio Snippet</button>
+        </div>
+      </div>
+
+      <!-- Profile Settings Form -->
+      <div class="card">
+        <h3 style="margin-bottom:1.25rem;">Business Information</h3>
+        <div id="profile-error" class="alert alert-error hidden"></div>
+
+        <form id="profile-form" novalidate>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="prof-biz-name">Business / Brand Name <span class="required">*</span></label>
+              <input class="form-input" type="text" id="prof-biz-name" placeholder="e.g. Aura Handmade Crafts" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prof-contact-name">Contact Person Name</label>
+              <input class="form-input" type="text" id="prof-contact-name" placeholder="e.g. Priya Sharma">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:1rem;">
+            <div class="form-group">
+              <label class="form-label" for="prof-upi">Official Business UPI ID <span class="required">*</span></label>
+              <input class="form-input mono" type="text" id="prof-upi" placeholder="e.g. auracrafts@oksbi" required>
+              <div class="form-hint">Used to cross-check payee UPI address on customer payment screenshots.</div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="prof-phone">Contact Phone / WhatsApp</label>
+              <input class="form-input" type="tel" id="prof-phone" placeholder="e.g. +91 98765 43210">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="prof-email">Public Contact Email</label>
+            <input class="form-input" type="email" id="prof-email" placeholder="e.g. support@auracrafts.in">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="prof-address">Dispatch / Business Address</label>
+            <textarea class="form-input" id="prof-address" rows="2" placeholder="Your business city, state or address..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="prof-notes">Store Policies / Instructions to Customers</label>
+            <textarea class="form-input" id="prof-notes" rows="2" placeholder="e.g. Dispatch within 48h after bank payment confirmation. Always verify your TC-XXXXXXXX referral code."></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" id="save-profile-btn">
+            Save Profile Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- Account Security Card -->
+      <div class="card" style="margin-top:1.5rem;">
+        <h3 style="margin-bottom:0.75rem;">Account Details</h3>
+        <div style="font-size:0.875rem;color:var(--text-secondary);display:flex;flex-direction:column;gap:0.4rem;">
+          <div><strong>Account Email:</strong> <span id="acc-email" class="mono">—</span></div>
+          <div><strong>Seller ID:</strong> <span id="acc-id" class="mono">—</span></div>
+          <div><strong>Member Since:</strong> <span id="acc-created">—</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/profile.js"></script>
+</body>
+</html>

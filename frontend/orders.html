@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orders — TrustCheck</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">TC</div><div><div class="logo-text">TrustCheck</div><div class="logo-tagline">Digital Trust Platform</div></div></div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" data-page="orders" href="/orders.html"><span class="nav-icon">📋</span>Orders</a>
+      <a class="nav-item" data-page="verify" href="/verify-payment.html"><span class="nav-icon">🔍</span>Verify Payment</a>
+      <span class="nav-section-label">Products</span>
+      <a class="nav-item" data-page="products" href="/products.html"><span class="nav-icon">📦</span>Products</a>
+      <span class="nav-section-label">Account</span>
+      <a class="nav-item" data-page="profile" href="/profile.html"><span class="nav-icon">👤</span>Profile & Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="seller-info"><div class="seller-avatar" id="sidebar-avatar">?</div><div><div class="seller-name" id="sidebar-name">—</div><div class="seller-email" id="sidebar-email">—</div></div></div>
+      <button class="btn-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mobile-nav-bar"><button class="mobile-menu-btn" id="mobile-menu-btn">☰</button><div class="logo-text">TrustCheck</div></div>
+
+    <div class="page-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div><h1 class="page-title">Orders</h1><p class="page-subtitle">Create and manage your orders</p></div>
+        <button class="btn btn-primary btn-sm" id="btn-new-order">+ New Order</button>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Create Order Form (hidden by default) -->
+      <div class="card" id="create-order-panel" style="display:none;margin-bottom:1.5rem;">
+        <h3 style="margin-bottom:1.25rem;">Create New Order</h3>
+        <div id="create-order-error" class="alert alert-error hidden"></div>
+        <form id="create-order-form" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Product (optional)</label>
+              <select class="form-input" id="order-product">
+                <option value="">— No specific product —</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Quantity</label>
+              <input class="form-input" type="number" id="order-qty" value="1" min="1">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Expected Amount (₹) <span class="required">*</span></label>
+              <input class="form-input" type="number" id="order-amount" placeholder="0.00" min="0.01" step="0.01" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Payee UPI ID</label>
+              <input class="form-input" type="text" id="order-upi" placeholder="name@upi">
+              <div class="form-hint">Leave blank to use your profile UPI ID</div>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Payee Name</label>
+              <input class="form-input" type="text" id="order-payee" placeholder="Your business name">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Customer Label</label>
+              <input class="form-input" type="text" id="order-customer" placeholder="e.g. Priya - Blue Kurti" maxlength="200">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Private Note</label>
+            <textarea class="form-input" id="order-note" placeholder="Internal note — not shared with customer" maxlength="1000" rows="2"></textarea>
+          </div>
+          <div style="display:flex;gap:0.75rem;">
+            <button type="submit" class="btn btn-primary" id="create-order-btn">Create Order</button>
+            <button type="button" class="btn btn-ghost" onclick="document.getElementById('create-order-panel').style.display='none'">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Order created success: referral code display -->
+      <div class="card hidden" id="new-order-result" style="margin-bottom:1.5rem;">
+        <div class="alert alert-ok" style="margin-bottom:1rem;">✅ Order created successfully!</div>
+        <h4 style="margin-bottom:0.5rem;">Share this referral code with your customer:</h4>
+        <div class="referral-box">
+          <div class="referral-code" id="new-order-code">—</div>
+          <button class="btn btn-secondary btn-sm" id="copy-order-code">📋 Copy</button>
+        </div>
+        <div id="shareable-msg" style="margin-top:1rem;background:var(--bg-input);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:1rem;font-size:0.85rem;color:var(--text-secondary);white-space:pre-wrap;font-family:var(--font-mono);"></div>
+        <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+          <button class="btn btn-ghost btn-sm" id="copy-msg">📋 Copy Message</button>
+          <a class="btn btn-primary btn-sm" href="/verify-payment.html">🔍 Verify a Payment</a>
+          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('new-order-result').classList.add('hidden')">Close</button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div style="display:flex;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
+        <input class="form-input" type="text" id="search-code" placeholder="Search by referral code…" style="max-width:280px;">
+        <button class="btn btn-secondary btn-sm" id="btn-search">Search</button>
+        <button class="btn btn-ghost btn-sm" id="btn-reset">Clear</button>
+      </div>
+
+      <!-- Orders table -->
+      <div id="orders-container">
+        <div class="loading-overlay"><div class="spinner"></div><span>Loading orders…</span></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/orders.js"></script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — TrustCheck</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">TC</div>
+      <div>
+        <div class="logo-text">TrustCheck</div>
+        <div class="logo-tagline">Digital Trust Platform</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" data-page="orders" href="/orders.html"><span class="nav-icon">📋</span>Orders</a>
+      <a class="nav-item" data-page="verify" href="/verify-payment.html"><span class="nav-icon">🔍</span>Verify Payment</a>
+      <span class="nav-section-label">Products</span>
+      <a class="nav-item" data-page="products" href="/products.html"><span class="nav-icon">📦</span>Products</a>
+      <span class="nav-section-label">Account</span>
+      <a class="nav-item" data-page="profile" href="/profile.html"><span class="nav-icon">👤</span>Profile & Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="seller-info">
+        <div class="seller-avatar" id="sidebar-avatar">?</div>
+        <div>
+          <div class="seller-name" id="sidebar-name">—</div>
+          <div class="seller-email" id="sidebar-email">—</div>
+        </div>
+      </div>
+      <button class="btn-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main-content">
+    <div class="mobile-nav-bar">
+      <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
+      <div class="logo-text">TrustCheck</div>
+    </div>
+
+    <div class="page-header">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle">Your seller overview and recent activity</p>
+        </div>
+        <a href="/orders.html#create" class="btn btn-primary btn-sm">+ New Order</a>
+      </div>
+    </div>
+
+    <div class="page-body">
+      <!-- Stats -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-label">Total Orders</div><div class="stat-value" id="stat-total">—</div></div>
+        <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value" id="stat-pending">—</div></div>
+        <div class="stat-card warning"><div class="stat-label">Needs Review</div><div class="stat-value" id="stat-review">—</div></div>
+        <div class="stat-card ok"><div class="stat-label">Confirmed</div><div class="stat-value" id="stat-confirmed">—</div></div>
+        <div class="stat-card error"><div class="stat-label">Suspicious</div><div class="stat-value" id="stat-suspicious">—</div></div>
+        <div class="stat-card"><div class="stat-label">Products</div><div class="stat-value" id="stat-products">—</div></div>
+        <div class="stat-card"><div class="stat-label">Certificates</div><div class="stat-value" id="stat-certs">—</div></div>
+      </div>
+
+      <!-- Quick actions -->
+      <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+        <a href="/verify-payment.html" class="btn btn-primary">🔍 Verify a Payment</a>
+        <a href="/orders.html#create" class="btn btn-secondary">📋 Create Order</a>
+        <a href="/products.html" class="btn btn-ghost">📦 Add Product</a>
+      </div>
+
+      <!-- Recent activity -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <h3 style="margin:0;">Recent Activity</h3>
+        </div>
+        <div id="activity-list">
+          <div class="loading-overlay"><div class="spinner"></div><span>Loading activity…</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/dashboard.js"></script>
+</body>
+</html>

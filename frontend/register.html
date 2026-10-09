@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — TrustCheck</title>
+  <meta name="description" content="Create your TrustCheck seller account to start verifying payments and protecting your business.">
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card" style="max-width:520px;">
+    <div class="auth-logo">
+      <div class="logo-icon">TC</div>
+      <div>
+        <div class="logo-text">TrustCheck</div>
+        <div class="logo-tagline">Digital Trust Platform</div>
+      </div>
+    </div>
+    <h1 class="auth-title">Create your account</h1>
+    <p class="auth-sub">Start verifying payments and protecting your business</p>
+
+    <div id="reg-error" class="alert alert-error hidden"></div>
+    <div id="reg-success" class="alert alert-ok hidden"></div>
+
+    <form id="register-form" novalidate>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="business_name">Business Name</label>
+          <input class="form-input" type="text" id="business_name" placeholder="My Shop" maxlength="200">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="contact_name">Your Name</label>
+          <input class="form-input" type="text" id="contact_name" placeholder="Priya Sharma" maxlength="200">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email <span class="required">*</span></label>
+        <input class="form-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
+        <div class="form-error hidden" id="email-error"></div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="phone">Phone</label>
+          <input class="form-input" type="tel" id="phone" placeholder="+91 98765 43210" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="upi_id">UPI ID</label>
+          <input class="form-input" type="text" id="upi_id" placeholder="name@upi" maxlength="100">
+          <div class="form-hint">Used for order payment details</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="password">Password <span class="required">*</span></label>
+          <input class="form-input" type="password" id="password" placeholder="Min 8 characters" autocomplete="new-password" required minlength="8">
+          <div class="form-error hidden" id="password-error"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confirm_password">Confirm Password <span class="required">*</span></label>
+          <input class="form-input" type="password" id="confirm_password" placeholder="Repeat password" autocomplete="new-password" required>
+          <div class="form-error hidden" id="confirm-error"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" id="register-btn">
+        Create Account
+      </button>
+    </form>
+
+    <p style="text-align:center;margin-top:1.5rem;font-size:0.875rem;color:var(--text-secondary)">
+      Already have an account? <a href="/login.html">Sign in</a>
+    </p>
+    <p style="text-align:center;margin-top:0.5rem;"><a href="/" style="font-size:0.8rem;color:var(--text-muted)">← Back to home</a></p>
+  </div>
+</div>
+
+<script src="/js/api.js"></script>
+<script>
+  if (getToken()) window.location.href = '/dashboard.html';
+
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    // Clear errors
+    ['email-error', 'password-error', 'confirm-error'].forEach(id => {
+      document.getElementById(id).classList.add('hidden');
+    });
+    document.getElementById('reg-error').classList.add('hidden');
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm_password').value;
+
+    let valid = true;
+
+    if (!email) {
+      document.getElementById('email-error').textContent = 'Email is required.';
+      document.getElementById('email-error').classList.remove('hidden');
+      valid = false;
+    }
+    if (password.length < 8) {
+      document.getElementById('password-error').textContent = 'Password must be at least 8 characters.';
+      document.getElementById('password-error').classList.remove('hidden');
+      valid = false;
+    }
+    if (password !== confirm) {
+      document.getElementById('confirm-error').textContent = 'Passwords do not match.';
+      document.getElementById('confirm-error').classList.remove('hidden');
+      valid = false;
+    }
+    if (!valid) return;
+
+    const btn = document.getElementById('register-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Creating account…';
+
+    try {
+      const body = {
+        email,
+        password,
+        business_name: document.getElementById('business_name').value.trim() || null,
+        contact_name: document.getElementById('contact_name').value.trim() || null,
+        phone: document.getElementById('phone').value.trim() || null,
+        upi_id: document.getElementById('upi_id').value.trim() || null,
+      };
+
+      const data = await api.register(body);
+      setToken(data.access_token);
+      const me = await api.me();
+      localStorage.setItem('tc_user', JSON.stringify(me));
+
+      document.getElementById('reg-success').textContent = 'Account created! Redirecting to dashboard…';
+      document.getElementById('reg-success').classList.remove('hidden');
+      setTimeout(() => window.location.href = '/dashboard.html', 1000);
+    } catch (err) {
+      document.getElementById('reg-error').textContent = err.message;
+      document.getElementById('reg-error').classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = 'Create Account';
+    }
+  });
+</script>
+</body>
+</html>

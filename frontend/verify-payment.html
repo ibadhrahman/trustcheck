@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Verify Payment — TrustCheck</title>
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+<div class="app-shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo"><div class="logo-icon">TC</div><div><div class="logo-text">TrustCheck</div><div class="logo-tagline">Digital Trust Platform</div></div></div>
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Main</span>
+      <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
+      <a class="nav-item" data-page="orders" href="/orders.html"><span class="nav-icon">📋</span>Orders</a>
+      <a class="nav-item" data-page="verify" href="/verify-payment.html"><span class="nav-icon">🔍</span>Verify Payment</a>
+      <span class="nav-section-label">Products</span>
+      <a class="nav-item" data-page="products" href="/products.html"><span class="nav-icon">📦</span>Products</a>
+      <span class="nav-section-label">Account</span>
+      <a class="nav-item" data-page="profile" href="/profile.html"><span class="nav-icon">👤</span>Profile & Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="seller-info"><div class="seller-avatar" id="sidebar-avatar">?</div><div><div class="seller-name" id="sidebar-name">—</div><div class="seller-email" id="sidebar-email">—</div></div></div>
+      <button class="btn-logout" onclick="logout()">🚪 Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="mobile-nav-bar"><button class="mobile-menu-btn" id="mobile-menu-btn">☰</button><div class="logo-text">TrustCheck</div></div>
+
+    <div class="page-header">
+      <h1 class="page-title">🔍 Verify Payment</h1>
+      <p class="page-subtitle">Cross-check a customer's payment submission against your order</p>
+    </div>
+
+    <div class="page-body" style="max-width:820px;">
+      <div class="alert alert-info">
+        <span>ℹ️</span>
+        <span><strong>How to use:</strong> Enter the order referral code and the transaction ID your customer gave you. Optionally upload their payment screenshot for OCR analysis. Then check your bank app independently before dispatching.</span>
+      </div>
+
+      <!-- Verification Form -->
+      <div class="card" style="margin-top:1rem;">
+        <h3 style="margin-bottom:1.25rem;">Payment Verification</h3>
+        <div id="verify-error" class="alert alert-error hidden"></div>
+
+        <form id="verify-form" novalidate>
+          <div class="form-group">
+            <label class="form-label">Order Referral Code <span class="required">*</span></label>
+            <input class="form-input mono" type="text" id="verify-code" placeholder="e.g. TC-7K9M4Q2X" style="font-size:1.1rem;letter-spacing:0.05em;" required>
+            <div class="form-hint">The code you shared with the customer when creating the order.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Transaction / Reference ID</label>
+            <input class="form-input mono" type="text" id="verify-txid" placeholder="e.g. 320123456789 or T12345678901234567890">
+            <div class="form-hint">The transaction ID the customer sent you. Leave blank if only uploading a screenshot.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Screenshot <span style="color:var(--text-muted);font-weight:400;">(optional)</span></label>
+            <div class="upload-zone" id="upload-zone">
+              <input type="file" id="screenshot-input" accept="image/jpeg,image/png,image/webp">
+              <div class="upload-icon">📸</div>
+              <div class="upload-label">Click to upload or drag & drop</div>
+              <div class="upload-hint">JPEG, PNG, or WebP · Max 5 MB</div>
+            </div>
+            <div class="upload-preview hidden" id="img-preview"><img id="preview-img" src="" alt="Preview"></div>
+            <div class="form-hint">Do not upload screenshots from anyone other than the customer you are verifying.</div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-lg" id="verify-btn">
+            Analyse & Cross-Verify
+          </button>
+        </form>
+      </div>
+
+      <!-- Result panel (hidden until analysis done) -->
+      <div id="result-section" class="hidden" style="margin-top:1.5rem;">
+
+        <!-- Verification Transaction ID Card -->
+        <div class="card" id="txid-card" style="border: 2px solid var(--accent-color); background: rgba(59, 130, 246, 0.08); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.25rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+            <div>
+              <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:600;">
+                TrustCheck Verification Transaction ID
+              </div>
+              <div style="font-size:1.75rem; font-weight:700; font-family:monospace; color:var(--accent-color); letter-spacing:0.04em; margin-top:0.25rem;" id="res-verification-txid">
+                —
+              </div>
+              <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.35rem; margin-bottom:0;">
+                Unique transaction identifier generated for this payment analysis. Use to reconcile with customer messages.
+              </p>
+            </div>
+            <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-txid">📋 Copy ID</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Risk panel -->
+        <div class="risk-panel" id="risk-panel">
+          <div class="risk-header" id="risk-header">
+            <div class="risk-score-ring" id="risk-score-ring">—</div>
+            <div>
+              <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.2rem;">Risk Assessment</div>
+              <div class="risk-verdict-badge" id="risk-verdict">—</div>
+            </div>
+            <div id="dup-warning" class="hidden" style="margin-left:auto;">
+              <span class="badge badge-suspicious">⚠️ Duplicate Detected</span>
+            </div>
+          </div>
+          <div class="risk-reasons" id="risk-reasons"></div>
+          <div class="risk-disclaimer" id="risk-disclaimer"></div>
+        </div>
+
+        <!-- Comparison table -->
+        <div class="card" style="margin-top:1rem;">
+          <h4 style="margin-bottom:0.75rem;">Side-by-Side Comparison</h4>
+          <div class="compare-grid">
+            <div class="compare-col-header">Expected (from order)</div>
+            <div class="compare-col-header">Extracted (from screenshot)</div>
+            <!-- Rows inserted by JS -->
+          </div>
+          <div id="compare-body"></div>
+        </div>
+
+        <!-- Duplicate warning detail -->
+        <div id="dup-detail-card" class="card hidden" style="margin-top:1rem;border-color:rgba(239,68,68,0.3);">
+          <h4 style="color:var(--color-error);margin-bottom:0.5rem;">⚠️ Duplicate Reference Warning</h4>
+          <p id="dup-detail-text" style="font-size:0.875rem;"></p>
+        </div>
+
+        <!-- Action card -->
+        <div class="card" style="margin-top:1rem;background:var(--color-ok-bg);border-color:rgba(16,185,129,0.2);">
+          <h4 style="color:var(--color-ok);margin-bottom:0.5rem;">✅ Required: Confirm Bank Credit</h4>
+          <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1rem;">
+            TrustCheck cannot confirm bank settlement. You must independently verify that the payment arrived in your UPI app or bank account before dispatching.
+          </p>
+          <button class="btn btn-success" id="btn-confirm-payment">I've verified the bank credit — Mark as Confirmed</button>
+          <button class="btn btn-danger" style="margin-left:0.75rem;" id="btn-flag-review">Flag for Review</button>
+        </div>
+      </div>
+
+      <!-- History section -->
+      <div style="margin-top:2rem;">
+        <h3 style="margin-bottom:0.75rem;">Recent Verifications</h3>
+        <div id="history-container">
+          <div class="loading-overlay"><div class="spinner"></div></div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/api.js"></script>
+<script src="/js/verify-payment.js"></script>
+</body>
+</html>
