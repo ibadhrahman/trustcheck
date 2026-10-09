@@ -24,8 +24,6 @@
       <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
       <a class="nav-item" data-page="orders" href="/orders.html"><span class="nav-icon">📋</span>Orders</a>
       <a class="nav-item" data-page="verify" href="/verify-payment.html"><span class="nav-icon">🔍</span>Verify Payment</a>
-      <span class="nav-section-label">Products</span>
-      <a class="nav-item" data-page="products" href="/products.html"><span class="nav-icon">📦</span>Products</a>
       <span class="nav-section-label">Account</span>
       <a class="nav-item" data-page="profile" href="/profile.html"><span class="nav-icon">👤</span>Profile & Settings</a>
     </nav>
@@ -66,15 +64,23 @@
         <div class="stat-card warning"><div class="stat-label">Needs Review</div><div class="stat-value" id="stat-review">—</div></div>
         <div class="stat-card ok"><div class="stat-label">Confirmed</div><div class="stat-value" id="stat-confirmed">—</div></div>
         <div class="stat-card error"><div class="stat-label">Suspicious</div><div class="stat-value" id="stat-suspicious">—</div></div>
-        <div class="stat-card"><div class="stat-label">Products</div><div class="stat-value" id="stat-products">—</div></div>
-        <div class="stat-card"><div class="stat-label">Certificates</div><div class="stat-value" id="stat-certs">—</div></div>
       </div>
 
       <!-- Quick actions -->
       <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1.5rem;">
         <a href="/verify-payment.html" class="btn btn-primary">🔍 Verify a Payment</a>
         <a href="/orders.html#create" class="btn btn-secondary">📋 Create Order</a>
-        <a href="/products.html" class="btn btn-ghost">📦 Add Product</a>
+      </div>
+
+      <!-- Recent Payment Verifications (seller-only) -->
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+          <h3 style="margin:0;">🔍 Recent Payment Verifications</h3>
+          <a href="/verify-payment.html" class="btn btn-primary btn-sm">+ New Verification</a>
+        </div>
+        <div id="verifications-list">
+          <div class="loading-overlay"><div class="spinner"></div><span>Loading verifications…</span></div>
+        </div>
       </div>
 
       <!-- Recent activity -->

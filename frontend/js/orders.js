@@ -14,23 +14,6 @@
     document.getElementById('create-order-panel').scrollIntoView({ behavior: 'smooth' });
   });
 
-  // Load products for dropdown
-  try {
-    const products = await api.getProducts();
-    const sel = document.getElementById('order-product');
-    products.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = `${p.name} — ₹${p.price.toFixed(2)}`;
-      sel.appendChild(opt);
-    });
-    // Auto-fill amount on product select
-    sel.addEventListener('change', () => {
-      const selected = products.find(p => p.id === Number(sel.value));
-      if (selected) document.getElementById('order-amount').value = selected.price;
-    });
-  } catch {}
-
   // Create order
   document.getElementById('create-order-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -48,14 +31,16 @@
     btn.disabled = true; btn.textContent = 'Creating…';
 
     try {
+      const prodText = document.getElementById('order-product') ? document.getElementById('order-product').value.trim() : '';
+      const payeeName = document.getElementById('order-payee') ? document.getElementById('order-payee').value.trim() : '';
+      const note = document.getElementById('order-note') ? document.getElementById('order-note').value.trim() : '';
+
       const body = {
-        product_id: Number(document.getElementById('order-product').value) || null,
         quantity: Number(document.getElementById('order-qty').value) || 1,
         expected_amount: amount,
-        expected_upi_id: document.getElementById('order-upi').value.trim() || null,
-        expected_payee_name: document.getElementById('order-payee').value.trim() || null,
-        customer_label: document.getElementById('order-customer').value.trim() || null,
-        private_note: document.getElementById('order-note').value.trim() || null,
+        expected_payee_name: payeeName || null,
+        customer_label: prodText || null,
+        private_note: note || null,
       };
 
       const order = await api.createOrder(body);
@@ -154,7 +139,7 @@ function renderOrders(orders) {
               <td>${formatDate(o.created_at)}</td>
               <td>
                 <div style="display:flex;gap:0.4rem;">
-                  <button class="btn btn-secondary btn-sm" onclick="verifyOrder('${o.referral_code}')">🔍 Verify</button>
+                  <button class="btn btn-secondary btn-sm" onclick="verifyOrder(${o.id})">🔍 Verify</button>
                   ${o.referral_code ? `<button class="btn btn-ghost btn-sm" onclick="copyCode('${o.referral_code}', this)">📋</button>` : ''}
                   ${o.status === 'pending' || o.status === 'needs_review' ?
                     `<button class="btn btn-success btn-sm" onclick="confirmOrder(${o.id})">✅</button>
@@ -168,8 +153,8 @@ function renderOrders(orders) {
     </div>`;
 }
 
-function verifyOrder(code) {
-  window.location.href = `/verify-payment.html?code=${encodeURIComponent(code)}`;
+function verifyOrder(orderId) {
+  window.location.href = `/verify-payment.html?order_id=${encodeURIComponent(orderId)}`;
 }
 
 function copyCode(code, btn) {

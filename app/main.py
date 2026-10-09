@@ -76,6 +76,12 @@ def redirect_scam_checker():
     return RedirectResponse(url="/dashboard.html", status_code=301)
 
 
+@app.get("/products.html")
+def redirect_products():
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/dashboard.html", status_code=301)
+
+
 # ---------------------------------------------------------------------------
 # Static frontend
 # ---------------------------------------------------------------------------

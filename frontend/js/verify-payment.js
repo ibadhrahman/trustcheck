@@ -32,37 +32,49 @@
         <div style="margin-left:auto;"><a href="/login.html" class="btn btn-ghost btn-sm">Seller Sign In</a></div>
       `;
     }
-    const histSection = document.getElementById('history-card') || document.querySelector('.card:has(#history-table)');
-    if (histSection) histSection.style.display = 'none';
   } else {
     loadHistory();
   }
 
-  // Pre-fill code from URL
+  // Handle Order ID / Code from URL
   const params = new URLSearchParams(window.location.search);
-  if (params.get('code')) document.getElementById('verify-code').value = params.get('code');
+  const orderParam = (params.get('order_id') || params.get('id') || params.get('code') || '').trim();
+  const orderIdInput = document.getElementById('verify-order-id');
+  const activeOrderBadge = document.getElementById('active-order-badge');
+  const activeCodeDisplay = document.getElementById('active-code-display');
 
-  // Screenshot preview
-  const input = document.getElementById('screenshot-input');
+  if (orderParam) {
+    if (orderIdInput) orderIdInput.value = orderParam;
+    if (activeCodeDisplay) activeCodeDisplay.textContent = orderParam.startsWith('#') ? orderParam : `#${orderParam}`;
+    if (activeOrderBadge) activeOrderBadge.classList.remove('hidden');
+  }
+
+  // Screenshot upload preview & drag-drop
+  const fileInput = document.getElementById('screenshot-input');
+  const uploadZone = document.getElementById('upload-zone');
   const preview = document.getElementById('img-preview');
   const previewImg = document.getElementById('preview-img');
-  const zone = document.getElementById('upload-zone');
 
-  input.addEventListener('change', () => {
-    const file = input.files[0];
-    if (file) {
-      previewImg.src = URL.createObjectURL(file);
-      preview.classList.remove('hidden');
-    }
-  });
+  if (fileInput && uploadZone) {
+    fileInput.addEventListener('change', () => {
+      if (fileInput.files[0]) {
+        previewImg.src = URL.createObjectURL(fileInput.files[0]);
+        preview.classList.remove('hidden');
+      }
+    });
 
-  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
-  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
-  zone.addEventListener('drop', (e) => {
-    e.preventDefault(); zone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) { input.files = e.dataTransfer.files; previewImg.src = URL.createObjectURL(file); preview.classList.remove('hidden'); }
-  });
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
+    uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+    uploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) {
+        fileInput.files = e.dataTransfer.files;
+        previewImg.src = URL.createObjectURL(e.dataTransfer.files[0]);
+        preview.classList.remove('hidden');
+      }
+    });
+  }
 
   // Form submit
   document.getElementById('verify-form').addEventListener('submit', async (e) => {
@@ -70,24 +82,22 @@
     const errEl = document.getElementById('verify-error');
     errEl.classList.add('hidden');
 
-    const code = document.getElementById('verify-code').value.trim();
-    const txId = document.getElementById('verify-txid').value.trim();
-    const file = input.files[0];
+    const orderId = (orderIdInput ? orderIdInput.value : '').trim();
+    const file = fileInput ? fileInput.files[0] : null;
 
-    if (!code) {
-      errEl.textContent = 'Please enter the order referral code.';
+    if (!orderId) {
+      errEl.textContent = 'Please enter an Order ID or Verification Reference to verify.';
       errEl.classList.remove('hidden');
       return;
     }
 
     const btn = document.getElementById('verify-btn');
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Analysing…';
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Verifying…';
 
     try {
       const fd = new FormData();
-      fd.append('order_referral_code', code);
-      if (txId) fd.append('submitted_tx_id', txId);
+      fd.append('order_referral_code', orderId);
       if (file) fd.append('screenshot', file);
 
       const result = await api.crossVerify(fd);
@@ -98,7 +108,7 @@
       errEl.classList.remove('hidden');
     } finally {
       btn.disabled = false;
-      btn.textContent = 'Analyse & Cross-Verify';
+      btn.textContent = 'Verify Payment';
     }
   });
 
@@ -113,7 +123,7 @@ function renderResult(r) {
   document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
 
   // Verification Transaction ID setup
-  const vTxId = r.verification_tx_id || r.order_referral_code || '—';
+  const vTxId = r.verification_tx_id || (r.order_id ? `#${r.order_id}` : '—');
   const txEl = document.getElementById('res-verification-txid');
   if (txEl) txEl.textContent = vTxId;
 
@@ -155,20 +165,36 @@ function renderResult(r) {
 
   // Comparison table
   const ext = r.extracted_fields;
-  const rows = [
-    { label: 'Amount', exp: formatCurrency(r.expected_amount), got: ext?.amount != null ? formatCurrency(ext.amount) : null, match: ext?.amount != null && Math.abs(ext.amount - r.expected_amount) < 0.01 },
-    { label: 'Payee Name', exp: r.expected_payee_name || '—', got: ext?.payee_name || null, match: ext?.payee_name && r.expected_payee_name && ext.payee_name.toLowerCase().includes(r.expected_payee_name.toLowerCase().substring(0,5)) },
-    { label: 'UPI ID', exp: r.expected_upi_id || '—', got: ext?.payee_upi_id || null, match: null },
-    { label: 'Transaction ID', exp: r.submitted_tx_id || '—', got: ext?.tx_id || null, match: ext?.tx_id && r.submitted_tx_id && ext.tx_id.toUpperCase() === r.submitted_tx_id.toUpperCase() },
-    { label: 'Date', exp: '—', got: ext?.date_str || null, match: null },
-    { label: 'Time', exp: '—', got: ext?.time_str || null, match: null },
-    { label: 'App', exp: '—', got: ext?.app_indicator || null, match: null },
-    { label: 'Status', exp: '—', got: ext?.status_text || null, match: null },
-  ];
+  const hasExtractedData = ext && (ext.amount != null || ext.tx_id || ext.payee_name || ext.date_str || ext.app_indicator);
 
   const grid = document.querySelector('.compare-grid');
   // Clear old rows beyond headers
   while (grid.children.length > 2) grid.removeChild(grid.lastChild);
+
+  const headers = document.querySelectorAll('.compare-col-header');
+  if (headers.length >= 2) {
+    headers[0].textContent = 'Order Record (Expected)';
+    headers[1].textContent = hasExtractedData ? 'Extracted from Screenshot' : 'Buyer Submission Status';
+  }
+
+  let rows = [];
+  if (hasExtractedData) {
+    rows = [
+      { label: 'Amount', exp: formatCurrency(r.expected_amount), got: ext?.amount != null ? formatCurrency(ext.amount) : null, match: ext?.amount != null && Math.abs(ext.amount - r.expected_amount) < 0.01 },
+      { label: 'Payee Name', exp: r.expected_payee_name || '—', got: ext?.payee_name || null, match: ext?.payee_name && r.expected_payee_name && ext.payee_name.toLowerCase().includes(r.expected_payee_name.toLowerCase().substring(0,5)) },
+      { label: 'UPI ID (reference only; not checked)', exp: 'Not checked', got: ext?.payee_upi_id || null, match: null },
+      { label: 'Transaction / UTR ID', exp: r.submitted_tx_id || '—', got: ext?.tx_id || ext?.utr || null, match: ext?.tx_id && r.submitted_tx_id && ext.tx_id.toUpperCase() === r.submitted_tx_id.toUpperCase() },
+      { label: 'Payment Date', exp: '—', got: ext?.date_str || null, match: null },
+      { label: 'Payment App', exp: '—', got: ext?.app_indicator || null, match: null },
+    ];
+  } else {
+    rows = [
+      { label: 'Order ID', exp: `#${r.order_id}`, got: 'Order Active', match: true },
+      { label: 'Expected Amount', exp: formatCurrency(r.expected_amount), got: 'Awaiting buyer proof', match: null },
+      { label: 'Payee Name', exp: r.expected_payee_name || '—', got: r.expected_payee_name || '—', match: true },
+      { label: 'Payment Proof', exp: 'Screenshot Required', got: 'Upload screenshot above or await buyer upload', match: null },
+    ];
+  }
 
   rows.forEach(row => {
     const expCell = document.createElement('div');
@@ -176,7 +202,7 @@ function renderResult(r) {
     expCell.innerHTML = `<span style="font-size:0.72rem;color:var(--text-muted);display:block;">${row.label}</span>${row.exp}`;
 
     const gotCell = document.createElement('div');
-    const gotText = row.got != null ? row.got : '<span class="unknown">Unknown</span>';
+    const gotText = row.got != null ? row.got : '<span class="unknown">Not detected</span>';
     const cls = row.got == null ? 'unknown' : row.match === true ? 'match' : row.match === false ? 'mismatch' : '';
     gotCell.className = `compare-cell ${cls}`;
     gotCell.innerHTML = `<span style="font-size:0.72px;color:transparent;display:block;">${row.label}</span>${gotText}`;
@@ -204,6 +230,7 @@ function renderResult(r) {
 
 async function loadHistory() {
   const el = document.getElementById('history-container');
+  if (!el) return;
   try {
     const history = await api.paymentHistory(10);
     if (!history.length) {
@@ -214,8 +241,8 @@ async function loadHistory() {
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>Order ID</th><th>Verification TX ID</th><th>Bank Ref</th><th>Amount (extracted)</th>
-            <th>Verdict</th><th>Viewpoint</th><th>Date</th>
+            <th>Order ID</th><th>Verification Ref</th><th>Bank Ref / UTR</th><th>Extracted Amount</th>
+            <th>Verdict</th><th>Date</th>
           </tr></thead>
           <tbody>
             ${history.map(h => `
@@ -223,9 +250,8 @@ async function loadHistory() {
                 <td>#${h.order_id}</td>
                 <td class="mono" style="color:var(--accent-color);font-weight:600;">${h.verification_tx_id || '—'}</td>
                 <td class="mono">${h.submitted_tx_id || h.extracted_tx_id || '—'}</td>
-                <td>${h.extracted_amount != null ? formatCurrency(h.extracted_amount) : '<span class="text-muted">Unknown</span>'}</td>
+                <td>${h.extracted_amount != null ? formatCurrency(h.extracted_amount) : '—'}</td>
                 <td>${verdictBadge(h.risk_verdict)}</td>
-                <td>${h.screenshot_viewpoint || '—'}</td>
                 <td>${formatDate(h.created_at)}</td>
               </tr>
             `).join('')}

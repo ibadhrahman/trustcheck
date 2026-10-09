@@ -233,6 +233,11 @@ class PaymentSubmission(Base):
     risk_score: Mapped[Optional[int]] = mapped_column(Integer)
     risk_verdict: Mapped[Optional[str]] = mapped_column(String(20))
     risk_reasons_json: Mapped[Optional[str]] = mapped_column(Text)
+    # Stored scan details for seller cross-checking without re-uploading
+    extracted_json: Mapped[Optional[str]] = mapped_column(Text)
+    forensics_json: Mapped[Optional[str]] = mapped_column(Text)
+    duplicate_json: Mapped[Optional[str]] = mapped_column(Text)
+    comparison_json: Mapped[Optional[str]] = mapped_column(Text)
     # Screenshot viewpoint: payer | receiver | unknown
     screenshot_viewpoint: Mapped[Optional[str]] = mapped_column(String(20))
     created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now)

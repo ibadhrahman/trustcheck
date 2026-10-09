@@ -132,9 +132,18 @@ def _compute_risk(
             score += 5
 
     else:
-        # No screenshot — can only check tx reference records
-        reasons.append(RiskReason(level="warning", text="No screenshot provided. Analysis is based on the submitted transaction reference only."))
-        score += 10
+        # Without a screenshot there is no visual evidence to assess.
+        score += 20
+        if submitted_tx_id:
+            reasons.append(RiskReason(
+                level="warning",
+                text="A transaction reference was submitted, but no screenshot was provided for analysis.",
+            ))
+        else:
+            reasons.append(RiskReason(
+                level="warning",
+                text="The order reference was found, but no payment screenshot was provided for analysis.",
+            ))
 
     # --- Duplicate reference check ---
     if duplicate_ref and duplicate_ref.get("duplicate_found"):
@@ -147,13 +156,20 @@ def _compute_risk(
         score += 30
 
     # --- Forensics ---
+    forensic_warning_found = False
     if forensics:
         for finding in forensics.get("findings", []):
             if finding["level"] == "warning":
+                forensic_warning_found = True
                 reasons.append(RiskReason(level="warning", text=f"[Forensics] {finding['detail']}"))
                 score += 10
             elif finding["level"] == "ok":
                 reasons.append(RiskReason(level="ok", text=f"[Forensics] {finding['detail']}"))
+
+    # A forensic warning (such as EXIF identifying editing software) must
+    # never be presented as a low-risk "genuine" result by itself.
+    if forensic_warning_found:
+        score = max(score, 20)
 
     # Cap score
     score = min(score, 100)
@@ -225,44 +241,62 @@ async def cross_verify_payment(
     code_cleaned = order_referral_code.strip().upper()
     order = None
 
-    # 1. Resolve order code (TC-XXXXXXXX)
-    orc = resolve_order_referral_code(db, code_cleaned)
-    if orc:
-        if current_user and orc.seller_id != current_user.id:
-            raise HTTPException(status_code=403, detail="Access denied.")
-        order = orc.order
-    else:
-        # 2. Or resolve master seller code (SL-XXXX-XXXX)
-        src = resolve_seller_referral_code(db, code_cleaned)
-        if src:
-            if current_user and src.seller_id != current_user.id:
+    # 0. Check if numeric order ID (e.g. "12", "#12", "ORDER 12")
+    numeric_candidate = code_cleaned.replace("ORDER", "").replace("#", "").strip()
+    if numeric_candidate.isdigit():
+        order_by_id = db.query(Order).filter(Order.id == int(numeric_candidate)).first()
+        if order_by_id:
+            if current_user and order_by_id.seller_id != current_user.id:
                 raise HTTPException(status_code=403, detail="Access denied.")
-            order = (
-                db.query(Order)
-                .filter(Order.seller_id == src.seller_id, Order.status.in_(["pending", "needs_review"]))
-                .order_by(Order.created_at.desc())
-                .first()
-            )
-            if not order:
-                seller = src.seller
-                profile = seller.profile
-                order = Order(
-                    seller_id=src.seller_id,
-                    expected_amount=0.0,
-                    expected_upi_id=profile.upi_id if profile else None,
-                    expected_payee_name=profile.business_name or profile.contact_name if profile else None,
-                    customer_label="Buyer Payment via Master Seller Code",
-                    private_note=f"Submitted using master seller code {src.code}",
-                    status="pending",
-                )
-                db.add(order)
-                db.flush()
-                create_order_referral_code(db, order.id, src.seller_id)
+            order = order_by_id
+
+    # 1. Resolve order code (TC-XXXXXXXX) or Verification ID (TXN-XXXX-XXXX)
+    if not order:
+        if code_cleaned.startswith("TXN-"):
+            sub = db.query(PaymentSubmission).filter(PaymentSubmission.verification_tx_id == code_cleaned).first()
+            if sub and sub.order:
+                if current_user and sub.seller_id != current_user.id:
+                    raise HTTPException(status_code=403, detail="Access denied.")
+                order = sub.order
+
+    if not order:
+        orc = resolve_order_referral_code(db, code_cleaned)
+        if orc:
+            if current_user and orc.seller_id != current_user.id:
+                raise HTTPException(status_code=403, detail="Access denied.")
+            order = orc.order
         else:
-            raise HTTPException(
-                status_code=404,
-                detail="Referral code not found. Please check your seller code (SL-XXXX-XXXX) or order code (TC-XXXXXXXX).",
-            )
+            # 2. Or resolve master seller code (SL-XXXX-XXXX)
+            src = resolve_seller_referral_code(db, code_cleaned)
+            if src:
+                if current_user and src.seller_id != current_user.id:
+                    raise HTTPException(status_code=403, detail="Access denied.")
+                order = (
+                    db.query(Order)
+                    .filter(Order.seller_id == src.seller_id, Order.status.in_(["pending", "needs_review"]))
+                    .order_by(Order.created_at.desc())
+                    .first()
+                )
+                if not order:
+                    seller = src.seller
+                    profile = seller.profile
+                    order = Order(
+                        seller_id=src.seller_id,
+                        expected_amount=0.0,
+                        expected_upi_id=profile.upi_id if profile else None,
+                        expected_payee_name=profile.business_name or profile.contact_name if profile else None,
+                        customer_label="Buyer Payment via Master Seller Code",
+                        private_note=f"Submitted using master seller code {src.code}",
+                        status="pending",
+                    )
+                    db.add(order)
+                    db.flush()
+                    create_order_referral_code(db, order.id, src.seller_id)
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Order not found. Please check your Order ID or referral code.",
+                )
 
     if order.status == "cancelled":
         raise HTTPException(status_code=400, detail="This order has been cancelled.")
@@ -315,6 +349,40 @@ async def cross_verify_payment(
     ext_date = extracted.get("date_str") if extracted else None
     ext_payee = extracted.get("payee_name") if extracted else None
     viewpoint = extracted.get("viewpoint", "unknown") if extracted else None
+    comparison_summary = {
+        "expected_amount": order.expected_amount,
+        "expected_payee_name": order.expected_payee_name,
+        "extracted_amount": ext_amount,
+        "extracted_payee_name": ext_payee,
+        "extracted_tx_id": ext_tx_id,
+        "extracted_date": ext_date,
+        "extracted_time": extracted.get("time_str") if extracted else None,
+        "amount_match": ext_amount is not None and abs(ext_amount - order.expected_amount) < 0.01,
+        "payee_name_match": (
+            bool(
+                ext_payee.lower().strip() in order.expected_payee_name.lower().strip()
+                or order.expected_payee_name.lower().strip() in ext_payee.lower().strip()
+            )
+            if ext_payee and order.expected_payee_name else None
+        ),
+    }
+
+    def duplicate_snapshot(result: Optional[dict]) -> dict:
+        """Keep seller-visible duplicate evidence without another seller's record IDs."""
+        if not result or not result.get("duplicate_found"):
+            return {"duplicate_found": False}
+        return {
+            "duplicate_found": True,
+            "match_type": result.get("match_type", "transaction_reference"),
+            "phash_distance": result.get("phash_distance"),
+            "first_seen_at": result.get("first_seen_at"),
+            "message": result.get("message"),
+        }
+
+    duplicate_summary = {
+        "transaction_reference": duplicate_snapshot(duplicate_ref),
+        "screenshot": duplicate_snapshot(duplicate_img),
+    }
 
     seller_id = current_user.id if current_user else order.seller_id
     v_tx_id = generate_verification_tx_id()
@@ -334,6 +402,10 @@ async def cross_verify_payment(
         risk_score=risk.score,
         risk_verdict=risk.verdict,
         risk_reasons_json=json.dumps([r.model_dump() for r in risk.reasons]),
+        extracted_json=json.dumps(extracted, ensure_ascii=False, default=str) if extracted else None,
+        forensics_json=json.dumps(forensics_result, ensure_ascii=False, default=str) if forensics_result else None,
+        duplicate_json=json.dumps(duplicate_summary, ensure_ascii=False, default=str),
+        comparison_json=json.dumps(comparison_summary, ensure_ascii=False, default=str),
         screenshot_viewpoint=viewpoint,
     )
     db.add(submission)
@@ -376,24 +448,24 @@ async def cross_verify_payment(
             uncertain_fields=extracted.get("uncertain_fields", []),
             warnings=extracted.get("warnings", []),
         )
-
-    # Comparison summary for compatibility with both new and legacy frontends
-    comparison_summary = {
-        "expected_amount": order.expected_amount,
-        "expected_payee_name": order.expected_payee_name,
-        "expected_upi_id": order.expected_upi_id,
-        "amount_match": ext_amount is not None and abs(ext_amount - order.expected_amount) < 0.01,
-        "payee_name_match": (
-            bool(ext_payee and order.expected_payee_name and (
-                ext_payee.lower() in order.expected_payee_name.lower() or
-                order.expected_payee_name.lower() in ext_payee.lower()
-            ))
-        ),
-        "upi_match": bool(
-            extracted and extracted.get("payee_upi_id") and order.expected_upi_id and
-            str(extracted.get("payee_upi_id") or "").lower() == str(order.expected_upi_id or "").lower()
-        ),
-    }
+    else:
+        # Check if the order has prior submissions with extracted fields
+        latest_sub = (
+            db.query(PaymentSubmission)
+            .filter(PaymentSubmission.order_id == order.id)
+            .order_by(PaymentSubmission.created_at.desc())
+            .first()
+        )
+        if latest_sub and (latest_sub.extracted_amount is not None or latest_sub.extracted_tx_id or latest_sub.submitted_tx_id):
+            ext_out = ExtractedPaymentFields(
+                amount=latest_sub.extracted_amount,
+                currency="INR",
+                tx_id=latest_sub.extracted_tx_id or latest_sub.submitted_tx_id,
+                utr=latest_sub.extracted_tx_id,
+                payee_name=latest_sub.extracted_payee_name,
+                date_str=latest_sub.extracted_date,
+                viewpoint=latest_sub.screenshot_viewpoint or "unknown",
+            )
 
     return CrossVerifyResult(
         order_id=order.id,
@@ -432,6 +504,7 @@ def payment_history(
         .all()
     )
     result = []
+    repaired_records = False
     for s in submissions:
         reasons = []
         if s.risk_reasons_json:
@@ -439,6 +512,39 @@ def payment_history(
                 reasons = json.loads(s.risk_reasons_json)
             except Exception:
                 pass
+        def load_json(value: Optional[str]) -> Optional[dict]:
+            if not value:
+                return None
+            try:
+                parsed = json.loads(value)
+                return parsed if isinstance(parsed, dict) else None
+            except (TypeError, ValueError):
+                return None
+
+        comparison = load_json(s.comparison_json)
+        if comparison and "upi_match" in comparison:
+            # Remove the retired check from older saved comparison snapshots.
+            comparison.pop("upi_match", None)
+            s.comparison_json = json.dumps(comparison, ensure_ascii=False)
+            repaired_records = True
+        forensics = load_json(s.forensics_json)
+        forensic_warning_found = bool(
+            forensics and any(
+                finding.get("level") == "warning"
+                for finding in forensics.get("findings", [])
+            )
+        )
+        if forensic_warning_found and (s.risk_score is None or s.risk_score < 20):
+            # Correct older records created before forensic warnings received
+            # a minimum "careful" score.
+            s.risk_score = 20
+            s.risk_verdict = "careful"
+            repaired_records = True
+        if comparison is None and s.order:
+            comparison = {
+                "expected_amount": s.order.expected_amount,
+                "expected_payee_name": s.order.expected_payee_name,
+            }
         result.append({
             "submission_id": s.id,
             "order_id": s.order_id,
@@ -447,12 +553,25 @@ def payment_history(
             "extracted_amount": s.extracted_amount,
             "extracted_tx_id": s.extracted_tx_id,
             "extracted_payee_name": s.extracted_payee_name,
+            "extracted_fields": load_json(s.extracted_json),
+            "forensics": forensics,
+            "duplicates": load_json(s.duplicate_json),
+            "comparison": comparison,
+            "has_screenshot": bool(s.screenshot_sha256),
+            "image_metadata": ({
+                "sha256": s.screenshot_sha256,
+                "phash": s.screenshot_phash,
+                "file_size_bytes": s.screenshot_file_size,
+            } if s.screenshot_sha256 else None),
             "risk_score": s.risk_score,
             "risk_verdict": s.risk_verdict,
             "screenshot_viewpoint": s.screenshot_viewpoint,
             "created_at": s.created_at.isoformat(),
             "reasons": reasons,
+            "disclaimer": "Risk estimate only — not proof of payment.",
         })
+    if repaired_records:
+        db.commit()
     return result
 
 

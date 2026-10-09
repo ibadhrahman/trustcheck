@@ -16,8 +16,6 @@
       <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
       <a class="nav-item" data-page="orders" href="/orders.html"><span class="nav-icon">📋</span>Orders</a>
       <a class="nav-item" data-page="verify" href="/verify-payment.html"><span class="nav-icon">🔍</span>Verify Payment</a>
-      <span class="nav-section-label">Products</span>
-      <a class="nav-item" data-page="products" href="/products.html"><span class="nav-icon">📦</span>Products</a>
       <span class="nav-section-label">Account</span>
       <a class="nav-item" data-page="profile" href="/profile.html"><span class="nav-icon">👤</span>Profile & Settings</a>
     </nav>
@@ -45,10 +43,8 @@
         <form id="create-order-form" novalidate>
           <div class="form-row">
             <div class="form-group">
-              <label class="form-label">Product (optional)</label>
-              <select class="form-input" id="order-product">
-                <option value="">— No specific product —</option>
-              </select>
+              <label class="form-label">Product Name / Item</label>
+              <input class="form-input" type="text" id="order-product" placeholder="e.g. Handcrafted Silk Scarf">
             </div>
             <div class="form-group">
               <label class="form-label">Quantity</label>
@@ -61,19 +57,8 @@
               <input class="form-input" type="number" id="order-amount" placeholder="0.00" min="0.01" step="0.01" required>
             </div>
             <div class="form-group">
-              <label class="form-label">Payee UPI ID</label>
-              <input class="form-input" type="text" id="order-upi" placeholder="name@upi">
-              <div class="form-hint">Leave blank to use your profile UPI ID</div>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
               <label class="form-label">Payee Name</label>
               <input class="form-input" type="text" id="order-payee" placeholder="Your business name">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Customer Label</label>
-              <input class="form-input" type="text" id="order-customer" placeholder="e.g. Priya - Blue Kurti" maxlength="200">
             </div>
           </div>
           <div class="form-group">
