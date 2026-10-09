@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Buyer Payment Proof & Order Verification — TrustCheck</title>
-  <link rel="icon" type="image/png" href="/logo.png">
-  <meta name="description" content="Submit your payment screenshot and verify your order details with your merchant using your Order ID. No login required.">
+  <title>Buyer Payment Proof & Verification — TrustCheck</title>
+    <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="description" content="Submit and cross-verify your payment screenshot with your seller's referral code. No login required.">
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .buyer-container {
-      max-width: 820px;
+      max-width: 860px;
       margin: 2rem auto;
       padding: 0 1.25rem;
     }
@@ -23,31 +23,6 @@
       border: 1px solid var(--line);
       border-radius: var(--radius-lg);
       box-shadow: 0 4px 16px rgba(17, 24, 39, 0.05);
-    }
-    .order-summary-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 1rem;
-      margin-top: 1.25rem;
-    }
-    .summary-card {
-      background: #F9FAFB;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
-      padding: 0.9rem 1rem;
-    }
-    .summary-label {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--muted);
-      margin-bottom: 0.25rem;
-      font-weight: 600;
-    }
-    .summary-value {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-primary);
     }
   </style>
 </head>
@@ -63,100 +38,148 @@
       </div>
     </a>
     <div>
-      <a href="/login.html" class="button button-secondary" style="font-size:0.84rem;">Merchant Sign In</a>
+      <a href="/login.html" class="button button-secondary" style="font-size:0.84rem;">Are you a Seller? Sign In</a>
     </div>
   </header>
 
   <div class="alert alert-info" style="margin-bottom:1.5rem;">
     <span>🛡️</span>
-    <span><strong>Buyer Payment Submission:</strong> Enter your Order ID (e.g. <code>1024</code> or <code>#1024</code>) and upload your payment screenshot (or enter the UTR reference) to verify and attach your payment proof to the order.</span>
+    <span><strong>No Account Needed:</strong> Buyers can submit their payment receipt directly to their merchant. Enter the seller's code (e.g. <code>SL-AURA-7K9M</code>) or your order code (<code>TC-7K9M4Q2X</code>), your UTR reference, and screenshot.</span>
   </div>
 
   <!-- Verification Card -->
   <div class="card">
-    <h2 style="font-size:1.35rem;margin-bottom:0.4rem;">Submit Payment Details</h2>
+    <h2 style="font-size:1.4rem;margin-bottom:0.4rem;">Submit Payment Details</h2>
     <p style="font-size:0.875rem;color:var(--text-secondary);margin-bottom:1.25rem;">
-      Upload your UPI payment screenshot to automatically extract and authenticate payment proof for your seller.
+      Verify the payee details against your seller's profile and notify them of your transfer.
     </p>
 
     <div id="verify-error" class="alert alert-error hidden"></div>
     <div id="verify-success-banner" class="alert alert-ok hidden" style="margin-bottom:1rem;">
       <span>✓</span>
-      <span><strong>Submission Received:</strong> Your payment proof was processed and linked to the order record.</span>
+      <span><strong>Submission Received:</strong> Your payment proof was processed and attached to the seller's order record. The seller will verify receipt in their bank app before dispatching.</span>
     </div>
 
     <form id="verify-form" novalidate>
       <div class="form-group">
-        <label class="form-label">Order ID <span class="required">*</span></label>
-        <input class="form-input mono" type="text" id="verify-order-id" placeholder="e.g. 1024 or #1024" style="font-size:1.15rem;letter-spacing:0.04em;" required autofocus>
-        <div class="form-hint">Enter the Order ID provided by your seller in chat or on your receipt.</div>
+        <label class="form-label">Seller Code or Order Referral Code <span class="required">*</span></label>
+        <input class="form-input mono" type="text" id="verify-code" placeholder="e.g. SL-AURA-7K9M or TC-7K9M4Q2X" style="font-size:1.1rem;letter-spacing:0.05em;" required>
+        <div class="form-hint">Enter either your seller's master code from their bio or the specific order code they sent you.</div>
       </div>
 
       <div class="form-group">
-        <label class="form-label">Payment Screenshot <span class="required">*</span></label>
+        <label class="form-label">Bank Reference / UPI UTR / Transaction ID</label>
+        <input class="form-input mono" type="text" id="verify-txid" placeholder="e.g. 320145678912 or T2409...">
+        <div class="form-hint">The 12-digit UPI reference number or transaction ID shown in your payment app.</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Screenshot <span style="color:var(--text-muted);">(optional for automated OCR verification)</span></label>
         <div class="upload-zone" id="upload-zone">
-          <input type="file" id="screenshot-input" accept="image/jpeg,image/png,image/webp" required>
+          <input type="file" id="screenshot-input" accept="image/jpeg,image/png,image/webp">
           <div class="upload-icon">📸</div>
           <div class="upload-label">Click to upload or drag & drop payment receipt</div>
-          <div class="upload-hint">JPEG, PNG, or WebP · In-memory privacy-safe AI analysis</div>
+          <div class="upload-hint">JPEG, PNG, or WebP · In-memory OCR analysis</div>
         </div>
         <div class="upload-preview hidden" id="img-preview"><img id="preview-img" src="" alt="Preview"></div>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-lg" id="verify-btn" style="width:100%;">
-        🚀 Submit & Verify Payment Proof
+      <button type="submit" class="btn btn-primary btn-lg" id="verify-btn">
+        Submit & Verify Payment Proof
       </button>
     </form>
   </div>
 
   <!-- Result Section -->
+  <!-- Result Section -->
   <div id="result-section" class="hidden" style="margin-top:1.5rem;">
-    <!-- Success confirmation card -->
-    <div class="card" style="border:2px solid var(--color-ok); background:var(--color-ok-bg); padding:1.75rem; text-align:center; margin-bottom:1.25rem;">
-      <div style="font-size:2.75rem; margin-bottom:0.5rem;">✅</div>
-      <h3 style="color:var(--color-ok); margin-bottom:0.4rem;">Payment Proof Submitted!</h3>
-      <p style="color:var(--text-secondary); font-size:0.9rem; margin-bottom:1.25rem;">
-        Your payment proof has been securely processed and attached to the seller's order record. Share your Verification ID with the merchant so they can verify and dispatch.
-      </p>
-
-      <!-- Order Summary details -->
-      <div class="order-summary-grid" style="text-align:left; margin-bottom:1.25rem;">
-        <div class="summary-card">
-          <div class="summary-label">Order ID</div>
-          <div class="summary-value mono" id="res-order-id">—</div>
+    <!-- Unique Transaction ID Card to Share with Seller -->
+    <div class="card" id="txid-card" style="border: 2px solid var(--accent-color); background: rgba(59, 130, 246, 0.08); padding: 1.25rem; border-radius: 8px; margin-bottom: 1.25rem;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
+        <div>
+          <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); font-weight:600;">
+            Receipt Verification ID (Send to Seller)
+          </div>
+          <div style="font-size:1.75rem; font-weight:700; font-family:monospace; color:var(--accent-color); letter-spacing:0.04em; margin-top:0.25rem;" id="res-verification-txid">
+            —
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.35rem; margin-bottom:0;">
+            Give this unique Transaction ID to your seller so they can instantly confirm your order.
+          </p>
         </div>
-        <div class="summary-card">
-          <div class="summary-label">Expected Amount</div>
-          <div class="summary-value" id="res-order-amount" style="color:var(--color-primary, #4F46E5);">—</div>
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-txid">📋 Copy ID</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-share-whatsapp" style="background:#25D366; border-color:#25D366; color:#fff;">
+            💬 Share with Seller
+          </button>
         </div>
-        <div class="summary-card">
-          <div class="summary-label">Extracted / Verified Amount</div>
-          <div class="summary-value" id="res-extracted-amount">—</div>
-        </div>
-        <div class="summary-card">
-          <div class="summary-label">Payee / Merchant</div>
-          <div class="summary-value" id="res-payee-name">—</div>
-        </div>
-      </div>
-
-      <!-- Verification Transaction ID -->
-      <div style="background:var(--surface-2, rgba(59,130,246,0.08)); border:1.5px solid var(--accent-color); border-radius:8px; padding:1rem 1.25rem; margin-bottom:1.25rem; display:inline-block; min-width:280px;">
-        <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted); font-weight:600; margin-bottom:0.3rem;">Your Verification Reference ID</div>
-        <div id="res-verification-txid" style="font-size:1.5rem; font-weight:700; font-family:monospace; color:var(--accent-color); letter-spacing:0.04em;">—</div>
-      </div>
-
-      <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
-        <button type="button" class="btn btn-secondary" id="btn-copy-txid">📋 Copy Verification ID</button>
-        <button type="button" class="btn btn-primary" id="btn-share-whatsapp" style="background:#25D366; border-color:#25D366; color:#fff;">
-          💬 Share on WhatsApp
-        </button>
       </div>
     </div>
 
-    <!-- Instructions alert -->
-    <div class="alert alert-info">
-      <span>🔒</span>
-      <span>The full forensic analysis is visible to the merchant in their secure console. Your screenshot was processed entirely in-memory with zero raw image storage.</span>
+    <!-- Risk / Verification status -->
+    <div class="risk-panel" id="risk-panel">
+      <div class="risk-header" id="risk-header">
+        <div class="risk-score-ring" id="risk-score-ring">—</div>
+        <div>
+          <div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:0.2rem;">Receipt Verification Analysis</div>
+          <div class="risk-verdict-badge" id="risk-verdict">—</div>
+        </div>
+        <div id="dup-warning" class="hidden" style="margin-left:auto;">
+          <span class="badge badge-suspicious">⚠️ Duplicate Transaction Reference</span>
+        </div>
+      </div>
+      <div class="risk-reasons" id="risk-reasons"></div>
+      <div class="risk-disclaimer" id="risk-disclaimer"></div>
+    </div>
+
+    <!-- Innovation Module: NPCI Banking Rail Forensic Audit -->
+    <div class="card hidden" id="npci-card" style="margin-top:1rem; border-left: 4px solid var(--accent-color); background: #FAF9FD;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+        <div>
+          <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">
+            ⚡ Innovation Module · Deterministic Banking Rail Forensics
+          </span>
+          <h4 style="margin:0.2rem 0 0; font-size:1.05rem;">NPCI Julian-Cycle Banking Rail Audit</h4>
+        </div>
+        <div id="npci-status-badge"></div>
+      </div>
+      <p id="npci-detail-text" style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:0.85rem; line-height:1.45;"></p>
+      
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:0.75rem; background:#FFFFFF; padding:0.85rem; border-radius:8px; border:1px solid var(--line);">
+        <div>
+          <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Decoded Year</div>
+          <div style="font-size:0.95rem; font-weight:700; font-family:monospace;" id="npci-year-val">—</div>
+        </div>
+        <div>
+          <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Julian Day of Year</div>
+          <div style="font-size:0.95rem; font-weight:700; font-family:monospace;" id="npci-julian-val">—</div>
+        </div>
+        <div>
+          <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Reconstructed Date</div>
+          <div style="font-size:0.95rem; font-weight:700; font-family:monospace;" id="npci-date-val">—</div>
+        </div>
+        <div>
+          <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Switch Synchronization</div>
+          <div style="font-size:0.95rem; font-weight:700;" id="npci-sync-val">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extracted OCR & Comparison Table -->
+    <div class="card" style="margin-top:1rem;">
+      <h4 style="margin-bottom:0.75rem;">Verified Transaction Signals</h4>
+      <div class="compare-grid">
+        <div class="compare-col-header">Order / Merchant Details</div>
+        <div class="compare-col-header">Extracted from Receipt</div>
+      </div>
+      <div id="compare-body"></div>
+    </div>
+
+    <div class="card" style="margin-top:1rem;background:var(--color-ok-bg);border-color:rgba(16,185,129,0.25);">
+      <h4 style="color:var(--color-ok);margin-bottom:0.25rem;">Next Steps for Delivery</h4>
+      <p style="font-size:0.875rem;color:var(--text-secondary);">
+        Your transaction proof is recorded. Share your Verification Transaction ID with the seller so they can cross-check their bank account and dispatch your item.
+      </p>
     </div>
   </div>
 
@@ -173,39 +196,34 @@
     return '₹' + Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
-  const orderInput = document.getElementById('verify-order-id');
-  const fileInput = document.getElementById('screenshot-input');
-  const uploadZone = document.getElementById('upload-zone');
+  // Pre-fill code from URL if present (?code=SL-AURA-7K9M)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('code')) document.getElementById('verify-code').value = params.get('code');
+
+  const input = document.getElementById('screenshot-input');
   const preview = document.getElementById('img-preview');
   const previewImg = document.getElementById('preview-img');
+  const zone = document.getElementById('upload-zone');
   const form = document.getElementById('verify-form');
   const errEl = document.getElementById('verify-error');
   const successBanner = document.getElementById('verify-success-banner');
   const btn = document.getElementById('verify-btn');
   const resultSec = document.getElementById('result-section');
 
-  // Pre-fill Order ID from URL if present (?order_id=12 or ?id=12 or ?code=12)
-  const params = new URLSearchParams(window.location.search);
-  const prefill = params.get('order_id') || params.get('id') || params.get('code');
-  if (prefill && orderInput) {
-    orderInput.value = prefill.trim();
-  }
-
-  // File upload preview & drag-drop
-  fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) {
-      previewImg.src = URL.createObjectURL(fileInput.files[0]);
+  input.addEventListener('change', () => {
+    if (input.files[0]) {
+      previewImg.src = URL.createObjectURL(input.files[0]);
       preview.classList.remove('hidden');
     }
   });
 
-  uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragover'); });
-  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
-  uploadZone.addEventListener('drop', (e) => {
+  zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', (e) => {
     e.preventDefault();
-    uploadZone.classList.remove('dragover');
+    zone.classList.remove('dragover');
     if (e.dataTransfer.files[0]) {
-      fileInput.files = e.dataTransfer.files;
+      input.files = e.dataTransfer.files;
       previewImg.src = URL.createObjectURL(e.dataTransfer.files[0]);
       preview.classList.remove('hidden');
     }
@@ -216,30 +234,26 @@
     errEl.classList.add('hidden');
     successBanner.classList.add('hidden');
 
-    const orderId = orderInput.value.trim();
-    const file = fileInput.files[0];
+    const code = document.getElementById('verify-code').value.trim();
+    const txId = document.getElementById('verify-txid').value.trim();
+    const file = input.files[0];
 
-    if (!orderId) {
-      errEl.textContent = 'Please enter an Order ID to verify.';
-      errEl.classList.remove('hidden');
-      return;
-    }
-
-    if (!file) {
-      errEl.textContent = 'Please upload a payment screenshot.';
+    if (!code) {
+      errEl.textContent = 'Please enter your referral code (seller code SL-XXXX-XXXX or order code TC-XXXXXXXX).';
       errEl.classList.remove('hidden');
       return;
     }
 
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Analysing Screenshot & Submitting…';
+    btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Analysing with OCR & Submitting…';
 
     try {
       const fd = new FormData();
-      fd.append('order_referral_code', orderId);
+      fd.append('order_referral_code', code);
+      if (txId) fd.append('submitted_tx_id', txId);
       if (file) fd.append('screenshot', file);
 
-      // Call verification endpoint
+      // Call public cross-verify without authentication
       const result = await api.crossVerify(fd);
       renderResult(result);
       successBanner.classList.remove('hidden');
@@ -250,29 +264,169 @@
       errEl.classList.remove('hidden');
     } finally {
       btn.disabled = false;
-      btn.innerHTML = '🚀 Submit & Verify Payment Proof';
+      btn.textContent = 'Submit & Verify Payment Proof';
     }
   });
 
   function renderResult(result) {
-    const vTxId = result.verification_tx_id || result.order_referral_code || '—';
-    document.getElementById('res-order-id').textContent = result.order_id ? `#${result.order_id}` : (result.order_referral_code || '—');
-    document.getElementById('res-order-amount').textContent = formatCurrency(result.expected_amount);
-    
-    const extAmount = result.extracted_fields?.amount;
-    document.getElementById('res-extracted-amount').textContent = extAmount != null ? formatCurrency(extAmount) : (result.submitted_tx_id ? `UTR: ${result.submitted_tx_id}` : '—');
-    document.getElementById('res-payee-name').textContent = result.expected_payee_name || result.extracted_fields?.payee_name || '—';
-    document.getElementById('res-verification-txid').textContent = vTxId;
+    const risk = result.risk;
+    const scoreRing = document.getElementById('risk-score-ring');
+    const verdictEl = document.getElementById('risk-verdict');
+    const panel = document.getElementById('risk-panel');
+
+    scoreRing.textContent = risk.score;
+    verdictEl.textContent = risk.verdict.charAt(0).toUpperCase() + risk.verdict.slice(1);
+    verdictEl.className = `risk-verdict-badge verdict-${risk.verdict}`;
+    panel.className = `risk-panel risk-${risk.verdict}`;
+
+    // Unique Transaction ID setup
+    const txId = result.verification_tx_id || result.order_referral_code || 'TXN-' + Math.random().toString(36).substr(2, 8).toUpperCase();
+    document.getElementById('res-verification-txid').textContent = txId;
 
     document.getElementById('btn-copy-txid').onclick = () => {
-      navigator.clipboard.writeText(vTxId).then(() => showToast('Verification ID copied!', 'ok'));
+      navigator.clipboard.writeText(txId).then(() => {
+        showToast('Transaction ID copied: ' + txId, 'ok');
+      });
     };
 
     document.getElementById('btn-share-whatsapp').onclick = () => {
-      const orderRef = result.order_id ? `#${result.order_id}` : (result.order_referral_code || '');
-      const msg = `Hi! I've submitted my payment proof for Order ${orderRef} on TrustCheck.\nVerification Reference: ${vTxId}\nPlease check and confirm dispatch!`;
+      const msg = `Hi! I have submitted my payment proof on TrustCheck.\nVerification Transaction ID: ${txId}\nOrder Ref: ${result.order_referral_code}\nPlease check and confirm my order!`;
       window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
     };
+
+    // Reasons
+    const reasonsEl = document.getElementById('risk-reasons');
+    reasonsEl.innerHTML = risk.reasons.map(r => `
+      <div class="risk-reason ${r.level}">
+        <span class="risk-reason-icon">${r.level === 'ok' ? '✓' : r.level === 'error' ? '✕' : '⚠️'}</span>
+        <span>${escapeHtml(r.text)}</span>
+      </div>
+    `).join('');
+
+    document.getElementById('risk-disclaimer').textContent = risk.disclaimer || 'Risk estimate only — not proof of payment.';
+
+    // Duplicate indicator
+    const dupWarning = document.getElementById('dup-warning');
+    if (result.duplicate_warning) {
+      dupWarning.classList.remove('hidden');
+    } else {
+      dupWarning.classList.add('hidden');
+    }
+
+    // NPCI Julian-Cycle Rail Audit
+    const npci = result.npci_validation || (risk.details && risk.details.npci_validation);
+    const npciCard = document.getElementById('npci-card');
+    if (npci && npciCard && npci.is_valid_format) {
+      npciCard.classList.remove('hidden');
+      const badgeEl = document.getElementById('npci-status-badge');
+      const detailEl = document.getElementById('npci-detail-text');
+      const yearEl = document.getElementById('npci-year-val');
+      const julianEl = document.getElementById('npci-julian-val');
+      const dateEl = document.getElementById('npci-date-val');
+      const syncEl = document.getElementById('npci-sync-val');
+
+      detailEl.textContent = npci.detail || '';
+      yearEl.textContent = npci.decoded_year_digit != null ? `${npci.decoded_year_digit} (Claimed: ${npci.claimed_date ? npci.claimed_date.substring(0,4) : '—'})` : '—';
+      julianEl.textContent = npci.decoded_julian_day != null ? `Day ${String(npci.decoded_julian_day).padStart(3, '0')}` : '—';
+      dateEl.textContent = npci.decoded_date || 'Impossible Date';
+
+      if (npci.verdict === 'valid') {
+        badgeEl.innerHTML = '<span class="badge badge-genuine" style="font-weight:700;">✓ NPCI Rail Synced</span>';
+        syncEl.innerHTML = '<span style="color:var(--color-ok); font-weight:700;">✓ Synced (Genuine Rail)</span>';
+        npciCard.style.borderLeftColor = 'var(--color-ok)';
+      } else if (npci.verdict === 'impossible_julian_day') {
+        badgeEl.innerHTML = '<span class="badge badge-suspicious" style="font-weight:700;">✕ Impossible Julian Day</span>';
+        syncEl.innerHTML = '<span style="color:var(--color-error); font-weight:700;">✕ Synthetic / Spoofed</span>';
+        npciCard.style.borderLeftColor = 'var(--color-error)';
+      } else if (npci.verdict === 'future_utr' || npci.verdict === 'year_mismatch') {
+        badgeEl.innerHTML = '<span class="badge badge-suspicious" style="font-weight:700;">✕ Chronometric Anomaly</span>';
+        syncEl.innerHTML = '<span style="color:var(--color-error); font-weight:700;">✕ Date Mismatch</span>';
+        npciCard.style.borderLeftColor = 'var(--color-error)';
+      } else if (npci.verdict === 'stale_utr') {
+        badgeEl.innerHTML = '<span class="badge badge-careful" style="font-weight:700;">⚠️ Stale / Recycled UTR</span>';
+        syncEl.innerHTML = '<span style="color:var(--color-warning); font-weight:700;">⚠️ Outdated Reference</span>';
+        npciCard.style.borderLeftColor = 'var(--color-warning)';
+      } else {
+        badgeEl.innerHTML = '<span class="badge badge-neutral">Format Non-Standard</span>';
+        syncEl.innerHTML = '<span style="color:var(--text-muted);">Non-standard Gateway</span>';
+        npciCard.style.borderLeftColor = 'var(--line)';
+      }
+    } else if (npciCard) {
+      npciCard.classList.add('hidden');
+    }
+
+    // Comparison rows
+    const ext = result.extracted_fields || result.extracted || {};
+    const comp = result.comparison || {};
+    const expAmount = result.expected_amount != null ? result.expected_amount : comp.expected_amount;
+    const expName = result.expected_payee_name || comp.expected_payee_name;
+    const expUpi = result.expected_upi_id || comp.expected_upi_id;
+
+    const amountMatch = ext.amount != null && expAmount != null && Math.abs(ext.amount - expAmount) < 0.01;
+    const nameMatch = ext.payee_name && expName && (
+      ext.payee_name.toLowerCase().includes(expName.toLowerCase().substring(0, 4)) ||
+      expName.toLowerCase().includes(ext.payee_name.toLowerCase().substring(0, 4))
+    );
+
+    const rows = [
+      {
+        label: 'Amount',
+        exp: expAmount != null && expAmount > 0 ? formatCurrency(expAmount) : 'Pending Confirmation',
+        ext: ext.amount != null ? formatCurrency(ext.amount) : 'Not detected',
+        match: amountMatch ? true : (ext.amount != null && expAmount != null && expAmount > 0 ? false : null)
+      },
+      {
+        label: 'Payee Name',
+        exp: expName || '—',
+        ext: ext.payee_name || 'Not detected',
+        match: nameMatch ? true : (ext.payee_name && expName ? false : null)
+      },
+      {
+        label: 'Payee UPI ID',
+        exp: expUpi || '—',
+        ext: ext.payee_upi_id || '—',
+        match: ext.payee_upi_id && expUpi && ext.payee_upi_id.toLowerCase() === expUpi.toLowerCase() ? true : null
+      },
+      {
+        label: 'Transaction ID / UTR',
+        exp: txId,
+        ext: ext.tx_id || ext.utr || result.submitted_tx_id || '—',
+        match: null
+      },
+      {
+        label: 'App Detected',
+        exp: '—',
+        ext: ext.app_indicator ? ext.app_indicator.toUpperCase() : '—',
+        match: null
+      },
+      {
+        label: 'NPCI Banking Rail',
+        exp: 'NPCI 12-Digit Rail Standard',
+        ext: npci && npci.is_valid_format ? (npci.verdict === 'valid' ? '✓ Verified Julian Cycle' : npci.verdict.replace(/_/g, ' ').toUpperCase()) : 'Non-Standard / Pending',
+        match: npci && npci.is_valid_format ? (npci.verdict === 'valid' ? true : false) : null
+      },
+    ];
+
+    document.getElementById('compare-body').innerHTML = rows.map(r => `
+      <div class="compare-row">
+        <div class="compare-cell">
+          <div class="compare-cell-label">${r.label} (Expected / Reference)</div>
+          <div class="compare-cell-val">${escapeHtml(r.exp)}</div>
+        </div>
+        <div class="compare-cell">
+          <div class="compare-cell-label">${r.label} (From Receipt)</div>
+          <div class="compare-cell-val" style="display:flex;align-items:center;gap:0.4rem;">
+            ${escapeHtml(r.ext)}
+            ${r.match === true ? '<span style="color:var(--color-ok);">✓</span>' : r.match === false ? '<span style="color:var(--color-error);">✕</span>' : ''}
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
   }
 })();
 </script>

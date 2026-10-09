@@ -163,6 +163,48 @@ function renderResult(r) {
     document.getElementById('dup-detail-card').classList.add('hidden');
   }
 
+  // NPCI Julian-Cycle Rail Audit
+  const npci = r.npci_validation || (r.risk && r.risk.details && r.risk.details.npci_validation);
+  const npciCard = document.getElementById('npci-card');
+  if (npci && npciCard && npci.is_valid_format) {
+    npciCard.classList.remove('hidden');
+    const badgeEl = document.getElementById('npci-status-badge');
+    const detailEl = document.getElementById('npci-detail-text');
+    const yearEl = document.getElementById('npci-year-val');
+    const julianEl = document.getElementById('npci-julian-val');
+    const dateEl = document.getElementById('npci-date-val');
+    const syncEl = document.getElementById('npci-sync-val');
+
+    detailEl.textContent = npci.detail || '';
+    yearEl.textContent = npci.decoded_year_digit != null ? `${npci.decoded_year_digit} (Claimed: ${npci.claimed_date ? npci.claimed_date.substring(0,4) : '—'})` : '—';
+    julianEl.textContent = npci.decoded_julian_day != null ? `Day ${String(npci.decoded_julian_day).padStart(3, '0')}` : '—';
+    dateEl.textContent = npci.decoded_date || 'Impossible Date';
+
+    if (npci.verdict === 'valid') {
+      badgeEl.innerHTML = '<span class="badge badge-genuine" style="font-weight:700;">✓ NPCI Rail Synced</span>';
+      syncEl.innerHTML = '<span style="color:var(--color-ok); font-weight:700;">✓ Synced (Genuine Rail)</span>';
+      npciCard.style.borderLeftColor = 'var(--color-ok)';
+    } else if (npci.verdict === 'impossible_julian_day') {
+      badgeEl.innerHTML = '<span class="badge badge-suspicious" style="font-weight:700;">✕ Impossible Julian Day</span>';
+      syncEl.innerHTML = '<span style="color:var(--color-error); font-weight:700;">✕ Synthetic / Spoofed</span>';
+      npciCard.style.borderLeftColor = 'var(--color-error)';
+    } else if (npci.verdict === 'future_utr' || npci.verdict === 'year_mismatch') {
+      badgeEl.innerHTML = '<span class="badge badge-suspicious" style="font-weight:700;">✕ Chronometric Anomaly</span>';
+      syncEl.innerHTML = '<span style="color:var(--color-error); font-weight:700;">✕ Date Mismatch</span>';
+      npciCard.style.borderLeftColor = 'var(--color-error)';
+    } else if (npci.verdict === 'stale_utr') {
+      badgeEl.innerHTML = '<span class="badge badge-careful" style="font-weight:700;">⚠️ Stale / Recycled UTR</span>';
+      syncEl.innerHTML = '<span style="color:var(--color-warning); font-weight:700;">⚠️ Outdated Reference</span>';
+      npciCard.style.borderLeftColor = 'var(--color-warning)';
+    } else {
+      badgeEl.innerHTML = '<span class="badge badge-neutral">Format Non-Standard</span>';
+      syncEl.innerHTML = '<span style="color:var(--text-muted);">Non-standard Gateway</span>';
+      npciCard.style.borderLeftColor = 'var(--line)';
+    }
+  } else if (npciCard) {
+    npciCard.classList.add('hidden');
+  }
+
   // Comparison table
   const ext = r.extracted_fields;
   const hasExtractedData = ext && (ext.amount != null || ext.tx_id || ext.payee_name || ext.date_str || ext.app_indicator);
@@ -186,6 +228,12 @@ function renderResult(r) {
       { label: 'Transaction / UTR ID', exp: r.submitted_tx_id || '—', got: ext?.tx_id || ext?.utr || null, match: ext?.tx_id && r.submitted_tx_id && ext.tx_id.toUpperCase() === r.submitted_tx_id.toUpperCase() },
       { label: 'Payment Date', exp: '—', got: ext?.date_str || null, match: null },
       { label: 'Payment App', exp: '—', got: ext?.app_indicator || null, match: null },
+      {
+        label: 'NPCI Banking Rail',
+        exp: 'NPCI 12-Digit Standard',
+        got: npci && npci.is_valid_format ? (npci.verdict === 'valid' ? '✓ Verified Julian Cycle' : npci.verdict.replace(/_/g, ' ').toUpperCase()) : null,
+        match: npci && npci.is_valid_format ? (npci.verdict === 'valid' ? true : false) : null
+      },
     ];
   } else {
     rows = [

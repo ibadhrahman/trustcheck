@@ -114,6 +114,39 @@
           <div class="risk-disclaimer" id="risk-disclaimer"></div>
         </div>
 
+        <!-- Innovation Module: NPCI Banking Rail Forensic Audit -->
+        <div class="card hidden" id="npci-card" style="margin-top:1rem; border-left: 4px solid var(--accent-color); background: #FAF9FD;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <div>
+              <span style="font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted);">
+                ⚡ Innovation Module · Deterministic Banking Rail Forensics
+              </span>
+              <h4 style="margin:0.2rem 0 0; font-size:1.05rem;">NPCI Julian-Cycle Banking Rail Audit</h4>
+            </div>
+            <div id="npci-status-badge"></div>
+          </div>
+          <p id="npci-detail-text" style="font-size:0.86rem; color:var(--text-secondary); margin-bottom:0.85rem; line-height:1.45;"></p>
+          
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap:0.75rem; background:#FFFFFF; padding:0.85rem; border-radius:8px; border:1px solid var(--line);">
+            <div>
+              <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Decoded Year</div>
+              <div style="font-size:0.95rem; font-weight:700; font-family:monospace;" id="npci-year-val">—</div>
+            </div>
+            <div>
+              <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Julian Day of Year</div>
+              <div style="font-size:0.95rem; font-weight:700; font-family:monospace;" id="npci-julian-val">—</div>
+            </div>
+            <div>
+              <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Reconstructed Date</div>
+              <div style="font-size:0.95rem; font-weight:700; font-family:monospace;" id="npci-date-val">—</div>
+            </div>
+            <div>
+              <div style="font-size:0.72rem; color:var(--text-muted); font-weight:600; text-transform:uppercase;">Switch Synchronization</div>
+              <div style="font-size:0.95rem; font-weight:700;" id="npci-sync-val">—</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Comparison table -->
         <div class="card" style="margin-top:1rem;">
           <h4 style="margin-bottom:0.75rem;">Side-by-Side Details</h4>

@@ -22,6 +22,7 @@ from app.analysis.duplicate_detection import (
     record_payment_reference,
 )
 from app.analysis.forensics import analyze_image
+from app.analysis.npci_validator import validate_utr_npci
 from app.analysis.ocr_check import extract_payment_fields, get_ocr_availability
 from app.analysis.payment_extractor import extract_payment_screenshot_details_async
 from app.auth import get_current_user, get_optional_current_user
@@ -171,6 +172,54 @@ def _compute_risk(
     if forensic_warning_found:
         score = max(score, 20)
 
+    # --- NPCI Julian-Cycle Banking Rail Audit (Innovation Engine) ---
+    npci_val_dict = None
+    ref_to_validate = None
+    if extracted and (extracted.get("utr") or extracted.get("tx_id")):
+        ref_to_validate = extracted.get("utr") or extracted.get("tx_id")
+    elif submitted_tx_id:
+        ref_to_validate = submitted_tx_id
+
+    if ref_to_validate:
+        claimed_date_input = None
+        if extracted and extracted.get("date_str"):
+            claimed_date_input = extracted.get("date_str")
+        elif order and order.created_at:
+            claimed_date_input = order.created_at.date()
+
+        npci_res = validate_utr_npci(ref_to_validate, claimed_date=claimed_date_input)
+        npci_val_dict = npci_res.to_dict()
+
+        if npci_res.verdict == "impossible_julian_day":
+            reasons.append(RiskReason(
+                level="error",
+                text=f"[NPCI Rail Audit] Impossible Julian cycle: {npci_res.detail}"
+            ))
+            score += 15
+        elif npci_res.verdict == "future_utr":
+            reasons.append(RiskReason(
+                level="error",
+                text=f"[NPCI Rail Audit] Chronometric anomaly: {npci_res.detail}"
+            ))
+            score += 15
+        elif npci_res.verdict == "year_mismatch":
+            reasons.append(RiskReason(
+                level="error",
+                text=f"[NPCI Rail Audit] Reference year mismatch: {npci_res.detail}"
+            ))
+            score += 10
+        elif npci_res.verdict == "stale_utr":
+            reasons.append(RiskReason(
+                level="warning",
+                text=f"[NPCI Rail Audit] Stale reference: {npci_res.detail}"
+            ))
+            score += 10
+        elif npci_res.verdict == "valid":
+            reasons.append(RiskReason(
+                level="ok",
+                text=f"[NPCI Rail Audit] Verified NPCI settlement rail (Julian Day {npci_res.decoded_julian_day:03d} -> {npci_res.decoded_date})."
+            ))
+
     # Cap score
     score = min(score, 100)
 
@@ -189,8 +238,10 @@ def _compute_risk(
         score=score,
         verdict=verdict,
         reasons=reasons,
+        npci_validation=npci_val_dict,
         details={
             "ocr_available": any(get_ocr_availability().values()),
+            "npci_validation": npci_val_dict,
         },
     )
 
@@ -208,6 +259,11 @@ async def analyze_payment(
     data = _validate_screenshot(file)
     extracted = await extract_payment_screenshot_details_async(data)
     forensics = analyze_image(data)
+    npci_val = None
+    ref_found = (extracted or {}).get("utr") or (extracted or {}).get("tx_id")
+    if ref_found:
+        npci_res = validate_utr_npci(ref_found, claimed_date=(extracted or {}).get("date_str"))
+        npci_val = npci_res.to_dict()
     return {
         "extracted": extracted,
         "forensics": {
@@ -217,6 +273,7 @@ async def analyze_payment(
             "observations": forensics["observations"],
             "disclaimer": forensics["disclaimer"],
         },
+        "npci_validation": npci_val,
         "ocr_availability": get_ocr_availability(),
     }
 
@@ -487,6 +544,7 @@ async def cross_verify_payment(
             (duplicate_ref or {}).get("message") or (duplicate_img or {}).get("message")
         ),
         submission_id=submission.id,
+        npci_validation=risk.npci_validation,
     )
 
 

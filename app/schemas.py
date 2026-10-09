@@ -24,6 +24,7 @@ class RiskResult(BaseModel):
     reasons: list[RiskReason]
     details: dict[str, Any] = {}
     heatmap_png_base64: Optional[str] = None
+    npci_validation: Optional[dict[str, Any]] = None
     disclaimer: str = (
         "Risk estimate only — not proof of payment. "
         "Confirm the credit in your bank or UPI app before dispatching."
@@ -228,6 +229,7 @@ class CrossVerifyResult(BaseModel):
     duplicate_warning: bool
     duplicate_details: Optional[str] = None
     submission_id: Optional[int] = None
+    npci_validation: Optional[dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------
