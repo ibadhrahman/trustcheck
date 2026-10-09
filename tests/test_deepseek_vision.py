@@ -181,12 +181,13 @@ async def test_deepseek_bhim_sample_extraction():
 
 
 @pytest.mark.asyncio
-async def test_fallback_to_local_ocr_when_deepseek_fails():
-    """If DeepSeek throws an exception or timeout, the pipeline falls back to local OCR."""
+async def test_fallback_to_local_ocr_when_deepseek_fails(monkeypatch):
+    """If DeepSeek throws an exception or timeout and Gemini is not available, the pipeline falls back to local OCR."""
     mock_client = MagicMock()
     mock_client.chat.completions.create = AsyncMock(side_effect=RuntimeError("API Gateway Timeout"))
 
-    with patch("app.analysis.deepseek_vision.get_deepseek_async_client", return_value=mock_client):
+    with patch("app.analysis.deepseek_vision.get_deepseek_async_client", return_value=mock_client), \
+         patch("app.analysis.payment_extractor.get_gemini_client", return_value=None):
         img_bytes = _make_dummy_image()
         result = await extract_payment_screenshot_details_async(img_bytes)
 
