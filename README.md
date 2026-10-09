@@ -19,7 +19,6 @@ Trustcheck bridges the trust gap between buyers and sellers through an automated
 * **Language:** Python
 * **Backend Framework:** FastAPI
 * **Cryptography:** SHA-256 Hashing
-* *(Add your database, OCR, or frontend tech here if applicable)*
 
 ## ⚙️ How it Works
 1. **Order Initiation:** The seller registers the order details via Trustcheck and generates a secure link for the buyer.
