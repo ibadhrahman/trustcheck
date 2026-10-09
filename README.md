@@ -4,16 +4,12 @@ A verified order platform that protects small sellers and buyers on
 Instagram and WhatsApp from fake payment screenshots, stolen product
 photos and scam requests.
 
-Built for **OPCODE IMPACT 2026** (Track: Deepfake, Synthetic Media & Digital Trust).
-
 ## The problem
 
 Millions of small sellers in India sell through chat. Orders, photos and
 payments are informal, so fraudsters send edited payment screenshots,
 post copied or AI-generated product photos, and send fake UPI collect
-requests. Existing AI-detection tools only answer "is this image fake?"
-and do not fit into a chat-based sale.
-
+requests.
 ## How it works
 
 1. The seller registers a shop, uploads product photos (fingerprinted with
