@@ -192,138 +192,207 @@
             .cs-action{width:100%;justify-content:flex-start;}
         }
         
-/* TrustCheck — Lavender Grey Theme */
-        :root {
-          --ink: #292536;
-          --muted: #625d6d;
-          --primary: #817795;
-          --primary-dark: #665b7b;
-          --mint: #E1DEE9;
-          --line: #D4BEBE;
-          --surface: #FDFBFF;
-          --background: #E1DEE9;
-          --shadow: 0 16px 45px rgba(80, 65, 100, 0.14);
-        }
-        
-        /* Page and navigation */
-        body {
-          background: var(--background);
-          color: var(--ink);
-        }
-        
-        header {
-          background: rgba(225, 222, 233, 0.94);
-          border-color: var(--line);
-        }
-        
-        .brand-mark {
-          background: var(--primary);
-          box-shadow: 0 5px 14px rgba(80, 65, 100, 0.2);
-        }
-        
-        .nav-links a:hover {
-          color: var(--primary-dark);
-        }
-        
-        /* Buttons */
-        .button-primary {
-          background: var(--primary);
-          color: #fff;
-          box-shadow: 0 7px 18px rgba(80, 65, 100, 0.2);
-        }
-        
-        .button-primary:hover {
-          background: var(--primary-dark);
-        }
-        
-        .button-secondary {
-          background: #FDFBFF;
-          color: var(--ink);
-          border-color: #B6A6CA;
-        }
-        
-        .button-secondary:hover {
-          background: #D5CFE1;
-        }
-        
-        /* Cards and verification panel */
-        .hero-card,
-        .feature,
-        .step {
-          background: var(--surface);
-          border-color: var(--line);
-          box-shadow: 0 8px 25px rgba(80, 65, 100, 0.07);
-        }
-        
-        .order-box {
-          background: #E1DEE9;
-        }
-        
-        .product-icon,
-        .feature-icon {
-          background: #D5CFE1;
-          color: #665B7B;
-        }
-        
-        .metric {
-          background: #FDFBFF;
-          border-color: #D5CFE1;
-        }
-        
-        .status,
-        .eyebrow {
-          background: #D5CFE1;
-          color: #514363;
-        }
-        
-        /* Contact section — lilac */
-        .contact-strip {
-          background: linear-gradient(135deg, #B6A6CA, #D5CFE1);
-          border: 1px solid #A09ABC;
-          box-shadow: 0 16px 40px rgba(80, 65, 100, 0.16);
-        }
-        
-        .cs-label,
-        .cs-title,
-        .cs-status,
-        .cs-action-meta span:first-child,
-        .cs-action-meta span:last-child {
-          color: #292536;
-        }
-        
-        .cs-divider {
-          background: rgba(80, 65, 100, 0.2);
-        }
-        
-        .cs-action {
-          background: rgba(255, 255, 255, 0.4);
-          border-color: rgba(80, 65, 100, 0.24);
-          color: #292536;
-        }
-        
-        .cs-action:hover {
-          background: #A09ABC;
-          border-color: #817795;
-          color: #fff;
-        }
-        
-        .cs-action-meta span:first-child,
-        .cs-action-meta span:last-child {
-          color: inherit;
-        }
-        
-        /* Footer */
-        footer {
-          background: rgba(213, 207, 225, 0.4);
-          border-color: var(--line);
-        }
-        
-        /* Accessible keyboard focus */
-        a:focus-visible,
-        button:focus-visible {
-          outline: 3px solid #665B7B;
-          outline-offset: 3px;
-        }
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   TrustCheck — Lilac Ash Premium Theme
+   Apple / Linear / Vercel aesthetic
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+
+/* ── CSS custom properties ── */
+:root {
+    --ink:          #292536;
+    --muted:        #625d6d;
+    --primary:      #817795;
+    --primary-dark: #665b7b;
+    --mint:         #E1DEE9;
+    --line:         #C8BFCF;
+    --surface:      #FDFBFF;
+    --background:   #EAE7F0;
+    --shadow:       0 16px 45px rgba(80,65,100,.13);
+
+    /* Lilac Ash palette */
+    --ash-icon:     #998A98;           /* muted purple-slate for strokes & accents  */
+    --ash-bg:       rgba(215,205,205,.15);  /* frosted tint for secondary bg / hovers   */
+    --ash-border:   rgba(153,138,152,.35);  /* hairline border for secondary elements    */
+    --ash-text:     #7A6D7A;           /* readable accent text                      */
+}
+
+/* ── Fluid gradient keyframe for primary buttons ── */
+@keyframes btn-gradient-flow {
+    0%   { background-position: 0%   50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0%   50%; }
+}
+
+/* ── Page & navigation ── */
+body {
+    background: var(--background);
+    color: var(--ink);
+}
+
+header {
+    background: rgba(234,231,240,.92);
+    border-color: var(--line);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+}
+
+.brand-mark {
+    background: var(--primary);
+    box-shadow: 0 5px 14px rgba(80,65,100,.22);
+}
+
+.nav-links a:hover { color: var(--primary-dark); }
+
+/* ── Primary buttons — flowing Lilac Ash gradient ── */
+.button-primary {
+    background: linear-gradient(
+        135deg,
+        #665b7b 0%,
+        #817795 30%,
+        #998A98 60%,
+        #665b7b 100%
+    );
+    background-size: 300% 300%;
+    animation: btn-gradient-flow 6s ease infinite;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,.14);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,.12) inset,
+        0 8px 22px rgba(80,65,100,.26);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.button-primary:hover {
+    background: linear-gradient(
+        135deg,
+        #665b7b 0%,
+        #817795 30%,
+        #998A98 60%,
+        #665b7b 100%
+    );
+    background-size: 300% 300%;
+    animation: btn-gradient-flow 3s ease infinite;   /* speed up on hover */
+    box-shadow:
+        0 1px 0 rgba(255,255,255,.16) inset,
+        0 12px 28px rgba(80,65,100,.32);
+    transform: translateY(-2px);
+}
+
+/* ── Secondary buttons — Lilac Ash glassmorphism ── */
+.button-secondary {
+    background: var(--ash-bg);
+    color: var(--ink);
+    border: 1px solid var(--ash-border);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,.55) inset,
+        0 4px 14px rgba(80,65,100,.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background .2s ease, border-color .2s ease,
+                box-shadow .2s ease, transform .2s ease;
+}
+
+.button-secondary:hover {
+    background: rgba(153,138,152,.22);
+    border-color: rgba(153,138,152,.55);
+    box-shadow:
+        0 1px 0 rgba(255,255,255,.6) inset,
+        0 6px 18px rgba(80,65,100,.12);
+    transform: translateY(-2px);
+}
+
+/* ── Cards, features, steps ── */
+.hero-card,
+.feature,
+.step {
+    background: var(--surface);
+    border-color: var(--line);
+    box-shadow: 0 8px 25px rgba(80,65,100,.07);
+}
+
+.order-box { background: #E5E1EE; }
+
+/* ── Feature & product icons — Lilac Ash stroke ── */
+.product-icon,
+.feature-icon {
+    background: rgba(215,205,205,.28);
+    color: var(--ash-icon);
+    border: 1px solid rgba(153,138,152,.2);
+}
+
+.metric {
+    background: var(--surface);
+    border-color: rgba(153,138,152,.25);
+}
+
+/* ── Tags / pills (eyebrow, status) ── */
+.status,
+.eyebrow {
+    background: rgba(215,205,205,.35);
+    color: #514363;
+    border: 1px solid rgba(153,138,152,.22);
+}
+
+/* ── Step numbers — Lilac Ash tint ── */
+.step-number {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* ── Contact strip — light lilac ── */
+.contact-strip {
+    background: linear-gradient(135deg, #C4B8D4 0%, #DDD8E8 50%, #C4B8D4 100%);
+    background-size: 300% 300%;
+    animation: btn-gradient-flow 10s ease infinite;
+    border: 1px solid rgba(153,138,152,.35);
+    box-shadow: 0 16px 40px rgba(80,65,100,.14);
+}
+
+.cs-label,
+.cs-title,
+.cs-status {
+    color: #292536;
+}
+
+.cs-action-meta span:first-child { color: #292536; }
+.cs-action-meta span:last-child  { color: var(--ash-text); }
+
+.cs-divider { background: rgba(80,65,100,.18); }
+
+/* Contact action pills — Lilac Ash glassmorphism */
+.cs-action {
+    background: rgba(215,205,205,.28);
+    border: 1px solid var(--ash-border);
+    color: #292536;
+    box-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
+    transition: background .2s ease, border-color .2s ease,
+                color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+
+.cs-action:hover {
+    background: rgba(153,138,152,.38);
+    border-color: rgba(153,138,152,.6);
+    color: #fff;
+    box-shadow: 0 1px 0 rgba(255,255,255,.2) inset;
+    transform: translateY(-1px);
+}
+
+.cs-action svg { stroke: var(--ash-icon); }
+.cs-action:hover svg { stroke: #fff; opacity: 1; }
+
+/* ── Footer ── */
+footer {
+    background: rgba(213,207,225,.35);
+    border-color: var(--line);
+}
+
+/* ── Accessible focus ring ── */
+a:focus-visible,
+button:focus-visible {
+    outline: 2.5px solid #817795;
+    outline-offset: 3px;
+}
     </style>
 </head>
 <body>
