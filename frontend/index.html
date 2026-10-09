@@ -9,6 +9,253 @@
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
+
+    /* ── Apple/Linear Glassmorphism Auth Modal ── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .modal-backdrop.is-open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+    .modal-card {
+      position: relative;
+      width: 100%;
+      max-width: 580px;
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      box-shadow: 0 24px 60px rgba(17, 24, 39, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+      padding: 2.25rem 2rem 1.6rem;
+      transform: scale(0.95) translateY(6px);
+      opacity: 0;
+      transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow: hidden;
+    }
+    .modal-backdrop.is-open .modal-card {
+      transform: scale(1) translateY(0);
+      opacity: 1;
+    }
+    /* Liquid-flow animated glow top edge */
+    .modal-glow-line {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #998A98 0%, #D7CDCD 25%, #817795 50%, #DDD8E8 75%, #998A98 100%);
+      background-size: 250% 100%;
+      animation: modal-glow-flow 6s ease infinite;
+    }
+    @keyframes modal-glow-flow {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .modal-close-btn {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(17, 24, 39, 0.05);
+      border: 1px solid rgba(17, 24, 39, 0.08);
+      border-radius: 50%;
+      color: #4B5563;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      padding: 0;
+    }
+    .modal-close-btn:hover {
+      background: rgba(17, 24, 39, 0.12);
+      color: #111827;
+      transform: scale(1.08);
+    }
+    .modal-header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+    .modal-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #111827;
+      line-height: 1.2;
+      margin-bottom: 0.35rem;
+    }
+    .modal-subtitle {
+      font-size: 0.95rem;
+      color: #6B7280;
+      font-weight: 500;
+    }
+    .modal-role-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .role-card {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-decoration: none;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1.5px solid rgba(17, 24, 39, 0.09);
+      border-radius: 18px;
+      padding: 1.25rem;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 4px 12px rgba(17, 24, 39, 0.03);
+      position: relative;
+    }
+    .role-card:hover {
+      background: #FFFFFF;
+      border-color: rgba(17, 24, 39, 0.25);
+      transform: translateY(-3px);
+      box-shadow: 0 14px 30px rgba(17, 24, 39, 0.09);
+    }
+    .role-card.is-active-role {
+      border-color: #111827;
+      background: #FFFFFF;
+      box-shadow: 0 14px 32px rgba(17, 24, 39, 0.12), 0 0 0 1.5px #111827;
+    }
+    .role-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.85rem;
+    }
+    .role-icon-box {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 1.25rem;
+      background: rgba(17, 24, 39, 0.05);
+      border: 1px solid rgba(17, 24, 39, 0.08);
+      transition: transform 0.2s ease;
+    }
+    .role-card:hover .role-icon-box {
+      transform: scale(1.08);
+    }
+    .role-pill {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: #E1EEE8;
+      color: #047857;
+      letter-spacing: 0.01em;
+    }
+    .seller-pill {
+      background: #E0E7FF;
+      color: #1E3A8A;
+    }
+    .role-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 0.35rem;
+      letter-spacing: -0.02em;
+    }
+    .role-desc {
+      font-size: 0.82rem;
+      line-height: 1.45;
+      color: #6B7280;
+      margin-bottom: 1.25rem;
+      min-height: 48px;
+    }
+    .role-card-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #111827;
+      transition: gap 0.2s ease, color 0.2s ease;
+    }
+    .role-card:hover .role-card-action {
+      gap: 10px;
+      color: #1E3A8A;
+    }
+    /* Switcher pill in modal footer */
+    .modal-footer {
+      display: flex;
+      justify-content: center;
+      padding-top: 0.85rem;
+      border-top: 1px solid rgba(17, 24, 39, 0.07);
+    }
+    .switcher-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 14px;
+      background: rgba(17, 24, 39, 0.04);
+      border: 1px solid rgba(17, 24, 39, 0.08);
+      border-radius: 999px;
+      font-size: 0.82rem;
+      color: #4B5563;
+      transition: all 0.2s ease;
+    }
+    .switcher-pill:hover {
+      background: rgba(17, 24, 39, 0.07);
+    }
+    .switcher-btn {
+      background: #111827;
+      color: #FFFFFF;
+      border: none;
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s ease;
+    }
+    .switcher-btn:hover {
+      background: #1F2937;
+      transform: translateY(-1px);
+    }
+    @media (max-width: 580px) {
+      .modal-card {
+        padding: 1.75rem 1.25rem 1.25rem;
+        border-radius: 20px;
+      }
+      .modal-role-grid {
+        grid-template-columns: 1fr;
+      }
+      .role-desc {
+        min-height: auto;
+      }
+      .switcher-pill {
+        flex-direction: column;
+        gap: 6px;
+        text-align: center;
+        border-radius: 16px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -27,8 +274,7 @@
         <a href="#contact" style="font-weight:600;font-size:0.92rem;color:#111827;">Contact</a>
       </div>
       <div style="display:flex;gap:0.75rem;align-items:center;">
-        <a href="/verify.html" class="button button-secondary" style="font-size:0.85rem;">🛍️ Buyer: Verify Proof</a>
-        <a href="/login.html" class="button button-primary" style="font-size:0.85rem;">Get started</a>
+        <button type="button" class="button button-primary btn-get-started" style="font-size:0.85rem;cursor:pointer;">Get started</button>
       </div>
     </nav>
   </header>
@@ -42,8 +288,7 @@
           <h1>Your Transaction. Our Verification. Zero Cost.</h1>
           <p class="hero-copy">Cryptographic payment and image authentication built directly for chat-based buyers and sellers on Instagram and WhatsApp.</p>
           <div class="hero-buttons">
-            <a href="/login.html" class="button button-primary btn-lg" style="font-size:0.95rem;">Get started</a>
-            <a href="/verify.html" class="button button-secondary btn-lg" style="font-size:0.95rem;">🛍️ Buyer: Upload Payment Proof</a>
+            <button type="button" class="button button-primary btn-lg btn-get-started" style="font-size:0.95rem;cursor:pointer;">Get started</button>
             <a href="#how-it-works" class="hero-link" style="margin-left:0.5rem;">Explore workflow →</a>
           </div>
           <div class="trust-note">
@@ -242,6 +487,173 @@
       </div>
     </div>
   </footer>
+
+  <!-- ── Get Started Choice Modal ── -->
+  <div id="auth-modal" class="modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card">
+      <div class="modal-glow-line" aria-hidden="true"></div>
+      <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close dialog">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+
+      <div class="modal-header">
+        <div class="modal-badge">
+          <img src="/logo.png" alt="TrustCheck" style="width:16px;height:16px;object-fit:contain;border-radius:4px;">
+          <span>TrustCheck Access</span>
+        </div>
+        <h2 id="modal-title" class="modal-title">Welcome to TrustCheck</h2>
+        <p class="modal-subtitle">Choose how you want to continue</p>
+      </div>
+
+      <div class="modal-role-grid" id="modal-role-grid">
+        <!-- 1. Buyer Role Card -->
+        <a href="/verify.html" class="role-card is-active-role" id="role-card-buyer" data-role="buyer" aria-label="Continue as Buyer">
+          <div class="role-card-header">
+            <div class="role-icon-box buyer-icon-box">🛍️</div>
+            <span class="role-pill">No login required</span>
+          </div>
+          <div>
+            <h3 class="role-name">Continue as Buyer</h3>
+            <p class="role-desc">Upload payment screenshot or verify an order reference - No login required</p>
+          </div>
+          <div class="role-card-action">
+            <span>Verify payment</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </a>
+
+        <!-- 2. Seller Role Card -->
+        <a href="/login.html" class="role-card" id="role-card-seller" data-role="seller" aria-label="Continue as Seller">
+          <div class="role-card-header">
+            <div class="role-icon-box seller-icon-box">🛡️</div>
+            <span class="role-pill seller-pill">Merchant Console</span>
+          </div>
+          <div>
+            <h3 class="role-name">Continue as Seller</h3>
+            <p class="role-desc">Access your merchant defense console, verify credits & manage codes</p>
+          </div>
+          <div class="role-card-action">
+            <span>Merchant login</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </div>
+        </a>
+      </div>
+
+      <!-- Quick Switcher Toggle -->
+      <div class="modal-footer">
+        <div class="switcher-pill">
+          <span>Accidentally picked the wrong role?</span>
+          <button type="button" class="switcher-btn" id="role-switcher-btn" aria-label="Switch active role emphasis">
+            <span id="role-switcher-label">Switch to Seller →</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const modal = document.getElementById('auth-modal');
+      const closeBtn = document.getElementById('modal-close-btn');
+      const getStartedBtns = document.querySelectorAll('.btn-get-started');
+      const buyerCard = document.getElementById('role-card-buyer');
+      const sellerCard = document.getElementById('role-card-seller');
+      const switcherBtn = document.getElementById('role-switcher-btn');
+      const switcherLabel = document.getElementById('role-switcher-label');
+
+      let currentRole = 'buyer';
+
+      function openModal() {
+        if (!modal) return;
+        modal.classList.add('is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+      }
+
+      function closeModal() {
+        if (!modal) return;
+        modal.classList.remove('is-open');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+      }
+
+      function toggleRole() {
+        if (currentRole === 'buyer') {
+          currentRole = 'seller';
+          buyerCard.classList.remove('is-active-role');
+          sellerCard.classList.add('is-active-role');
+          if (switcherLabel) switcherLabel.textContent = 'Switch to Buyer →';
+        } else {
+          currentRole = 'buyer';
+          sellerCard.classList.remove('is-active-role');
+          buyerCard.classList.add('is-active-role');
+          if (switcherLabel) switcherLabel.textContent = 'Switch to Seller →';
+        }
+      }
+
+      getStartedBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          openModal();
+        });
+      });
+
+      if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+      // Close on backdrop click (outside card)
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) closeModal();
+        });
+      }
+
+      // Close on Escape key
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal && modal.classList.contains('is-open')) {
+          closeModal();
+        }
+      });
+
+      // Role switcher button toggle
+      if (switcherBtn) {
+        switcherBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          toggleRole();
+        });
+      }
+
+      // Hover / focus updates emphasis smoothly
+      if (buyerCard) {
+        buyerCard.addEventListener('mouseenter', () => {
+          if (currentRole !== 'buyer') {
+            currentRole = 'buyer';
+            sellerCard.classList.remove('is-active-role');
+            buyerCard.classList.add('is-active-role');
+            if (switcherLabel) switcherLabel.textContent = 'Switch to Seller →';
+          }
+        });
+      }
+      if (sellerCard) {
+        sellerCard.addEventListener('mouseenter', () => {
+          if (currentRole !== 'seller') {
+            currentRole = 'seller';
+            buyerCard.classList.remove('is-active-role');
+            sellerCard.classList.add('is-active-role');
+            if (switcherLabel) switcherLabel.textContent = 'Switch to Buyer →';
+          }
+        });
+      }
+    })();
+  </script>
 </div>
 </body>
 </html>
