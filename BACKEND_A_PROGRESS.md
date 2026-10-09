@@ -4,11 +4,11 @@ This file contains project state for a future assistant. It intentionally contai
 
 ## 1. Current status
 
-- Stage 0 setup and Stage 1 foundation are complete and merged into `main`. Stage 0 was PR #1; Stage 1 was PR #2.
-- Stage 1 provides the FastAPI shell, SQLite schema, static frontend mount, CORS, hidden helper health route, and temporary analysis stubs.
-- Next coding stage: Stage 2, seller registration, login, JWT, and the authentication dependency.
-- No coding stage is half-finished. The handoff files are committed and pushed on `backend-a/stage-1-handoff`; the handoff PR has not been opened.
-- The current worktree is on `backend-a/stage-1-handoff`, based on `main` at merge commit `daabddf`.
+- Stage 0 setup and Stage 1 foundation are complete and merged into `main`. Stage 0 was PR #1; Stage 1 was PR #2. The handoff files were also merged into `main` at `d3c85dd`.
+- Stage 2 registration, login, JWT creation, and the authentication dependency are implemented in `app/auth.py` and wired into `app/main.py`.
+- Next coding stage: Stage 3, certificate photo upload, hash chain, certificate lookup/verification, and ledger status.
+- Stage 2 code is complete but has not been runtime-tested in this turn. Its source and this progress update are currently uncommitted on the Stage 2 branch.
+- The current worktree is on `backend-a/stage-2-auth`, based on the pulled `main` at `d3c85dd`.
 
 ## 2. Decisions made
 
@@ -18,12 +18,15 @@ This file contains project state for a future assistant. It intentionally contai
 - Analysis stubs return score 50, verdict `careful`, and a warning that no checks were performed. They do not claim that an image, screenshot, or text is genuine.
 - FastAPI mounts `frontend/` at `/`; the mount is added after API routes. CORS allows all origins, methods, and headers, with credentials disabled.
 - Stage 1 was initially built on `origin/main` at `b355066`; Stage 0 was merged first, followed by Stage 1. Both Stage 0 setup files and Stage 1 app files are now present on `main`.
+- JWT signing uses the `TRUSTCHECK_JWT_SECRET` environment variable when provided; otherwise, development uses a fresh random process-local key. Tokens expire after 24 hours. Without the environment variable, tokens stop working after the server restarts.
+- Auth responses contain `token` and a public `seller` object with `seller_id`, `name`, `phone`, `shop_name`, and `upi_id`; `password_hash` is never returned.
+- Duplicate registration phone numbers return HTTP 409, invalid login returns HTTP 401, and request/framework errors use `{"error":"plain-language message"}`.
 
 ## 3. Files Backend A owns and what each does
 
 - `app/main.py` — creates the FastAPI app, configures CORS and static serving, initializes the database, and provides `GET /api/health`.
 - `app/db.py` — defines the SQLite tables and indexes and provides `get_connection()` and `init_db()`.
-- `app/auth.py` — planned seller registration/login routes, JWT creation, and authentication dependency; not created yet.
+- `app/auth.py` — implements `POST /api/auth/register`, `POST /api/auth/login`, bcrypt password hashing, JWT creation, and `get_current_seller()`.
 - `app/ledger.py` — planned certificate photo upload, SHA-256 hash chain, certificate lookup/verification, and ledger status; not created yet.
 - `app/orders.py` — planned seller order routes and public buyer order view; not created yet.
 - `app/references.py` — planned payment-proof handling, reference lookup/confirmation, reuse checks, and reference rate limiting; not created yet.
@@ -41,8 +44,10 @@ This file contains project state for a future assistant. It intentionally contai
 | Method | Path | Result and check |
 | --- | --- | --- |
 | GET | `/api/health` | Returns `{"status":"ok"}`. Checked locally with PowerShell against Uvicorn on port 8001; HTTP 200. Hidden from OpenAPI by design. |
+| POST | `/api/auth/register` | Implemented with the contract fields and response shape; no runtime request has been sent in this turn. |
+| POST | `/api/auth/login` | Implemented with the contract fields and response shape; no runtime request has been sent in this turn. |
 
-`GET /docs` also returned HTTP 200 and Swagger UI loaded. It currently shows no operations because no Shared Contract v2 endpoints have been implemented yet and the helper route is hidden from the schema.
+`GET /docs` returned HTTP 200 during Stage 1. After Stage 2, it should list the two auth routes; that updated page has not been checked yet. The helper health route remains hidden from OpenAPI.
 
 ## 5. Database
 
@@ -88,11 +93,12 @@ python -m uvicorn app.main:app --reload
 
 - Tests: Stage 7 has not created `tests/test_api.py`. Planned command: `python -m unittest discover -s tests`; confirm it when Stage 7 chooses and implements the test runner. There is no test suite to run yet.
 - Seed data: Stage 6 has not created `seed.py`. The planned command is `python seed.py` after that file exists.
-- Local checks completed so far: start Uvicorn, request `/api/health`, request `/docs`, and inspect `/openapi.json`. The temporary database used for the manual check was removed afterward.
+- Stage 2 auth routes have not been runtime-tested yet. Earlier local checks started Uvicorn, requested `/api/health` and `/docs`, and inspected `/openapi.json`; the temporary database from that manual check was removed afterward.
 
 ## 7. Known problems and open questions
 
-- The Stage 1 branch has no contract endpoints yet. Swagger showing no operations is expected until later stages.
+- Stage 2 auth routes are implemented but not runtime-tested yet. Run the server and the registration/login requests before merging.
+- When `TRUSTCHECK_JWT_SECRET` is unset, the random development signing key changes after a process restart, invalidating previously issued tokens. Configure the environment variable when stable tokens across restarts are needed.
 - `app/analysis/__init__.py` is only a stub. Backend B must replace it; Backend A must pull Backend B's change before Stage 5 testing and must not overwrite it.
 - Tesseract was not found during the earlier setup check. Backend B owns its installation.
 - Never add `trustcheck.db` or `app/__pycache__/` to Git; `.gitignore` now excludes them.
@@ -100,15 +106,14 @@ python -m uvicorn app.main:app --reload
 
 ## 8. Git state
 
-- Current branch: `backend-a/stage-1-handoff`, tracking the pushed branch on `origin`.
-- Current last commit message: `Backend A: update pushed handoff Git state`.
+- Current branch: `backend-a/stage-2-auth`, created from the pulled `main` at `d3c85dd`.
+- Stage 2 commit and push are pending; `app/auth.py`, `app/main.py`, and this progress update are the current stage changes.
 - Pushed and merged: Stage 0 PR #1 and Stage 1 PR #2. Their implementation commits were `8e88a4d` and `ddd9593` respectively.
-- The handoff branch, including `AGENTS.md` and `BACKEND_A_PROGRESS.md`, is pushed to `origin`. The handoff PR has not been opened yet.
-- Pulled `main` since the last stage: yes. `git pull --rebase origin main` completed before pushing; `origin/main` was at `daabddf` and the branch was up to date.
-- No uncommitted or unpushed handoff changes remain after the final push.
+- `AGENTS.md` and `BACKEND_A_PROGRESS.md` are merged into `main` at `d3c85dd`.
+- Pulled `main` since the last stage: yes. `git checkout main` and `git pull origin main` completed before creating the Stage 2 branch. `requirements.txt` was unchanged.
 
 ## 9. Next steps
 
-1. Before Stage 2, run `git checkout main` and `git pull origin main`. If `requirements.txt` changed, run `pip install -r requirements.txt` and `python check_setup.py` again.
-2. Create `backend-a/stage-2-auth` from the updated `main`.
-3. Implement seller registration, login, JWT creation, and the authentication dependency in `app/auth.py`, then expose only the contract routes in `app/main.py`.
+1. Finish the Stage 2 local registration/login checks, then review and merge its PR after a teammate says OK.
+2. Before Stage 3, run `git checkout main` and `git pull origin main`. If `requirements.txt` changed, run `pip install -r requirements.txt` and `python check_setup.py` again.
+3. Create `backend-a/stage-3-ledger` from the updated `main`; implement photo upload, SHA-256 hashing, the certificate hash chain, certificate lookup/verification, and `/api/ledger/status`.
