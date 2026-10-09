@@ -147,6 +147,10 @@ p  { color: var(--text-secondary); }
   background: #1F2937;
   transform: scale(1.05);
 }
+img.brand-mark, img.brand-mark:hover {
+  background: transparent !important;
+  box-shadow: none !important;
+}
 
 .logo-icon {
   width: 36px;
