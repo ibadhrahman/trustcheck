@@ -6,10 +6,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.auth import router as auth_router
 from app.db import init_db
 
 
@@ -38,6 +42,34 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_response(_: Request, exc: StarletteHTTPException) -> JSONResponse:
+    """Keep API and framework HTTP errors in the contract's error shape."""
+    if isinstance(exc.detail, str):
+        message = exc.detail
+    elif isinstance(exc.detail, dict) and isinstance(exc.detail.get("error"), str):
+        message = exc.detail["error"]
+    else:
+        message = "The request could not be completed."
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": message},
+        headers=exc.headers,
+    )
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_response(_: Request, __: RequestValidationError) -> JSONResponse:
+    """Return a concise error body for malformed request data."""
+    return JSONResponse(
+        status_code=422,
+        content={"error": "Request data is invalid or missing required fields."},
+    )
+
+
+app.include_router(auth_router)
 
 
 @app.get("/api/health", include_in_schema=False)
