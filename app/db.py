@@ -80,16 +80,17 @@ def init_db() -> None:
                         f"ALTER TABLE payment_submissions ADD COLUMN {column_name} {column_type}"
                     ))
         elif engine.dialect.name == "postgresql":
-            for column_name in (
-                "extracted_json",
-                "forensics_json",
-                "duplicate_json",
-                "comparison_json",
-            ):
-                conn.execute(text(
-                    "ALTER TABLE payment_submissions "
-                    f"ADD COLUMN IF NOT EXISTS {column_name} TEXT"
-                ))
+            # Apply the compatibility columns in one round trip to hosted Postgres.
+            conn.execute(text("""
+                DO $trustcheck_schema$
+                BEGIN
+                    ALTER TABLE public.payment_submissions ADD COLUMN IF NOT EXISTS extracted_json TEXT;
+                    ALTER TABLE public.payment_submissions ADD COLUMN IF NOT EXISTS forensics_json TEXT;
+                    ALTER TABLE public.payment_submissions ADD COLUMN IF NOT EXISTS duplicate_json TEXT;
+                    ALTER TABLE public.payment_submissions ADD COLUMN IF NOT EXISTS comparison_json TEXT;
+                END;
+                $trustcheck_schema$;
+            """))
 
     _secure_supabase_tables()
 
@@ -102,20 +103,30 @@ def _secure_supabase_tables() -> None:
 
     # The app uses its own authenticated FastAPI backend and connects server-side.
     # It does not use Supabase's anon/authenticated Data API roles.
+    table_names = ", ".join(
+        "'" + table_name.replace("'", "''") + "'"
+        for table_name in Base.metadata.tables
+    )
+    # Keep the same RLS and privilege rules while avoiding one network round trip
+    # per table when the app connects to hosted Supabase during startup.
     with engine.begin() as conn:
-        for table_name in Base.metadata.tables:
-            conn.execute(text(
-                f'ALTER TABLE public."{table_name}" ENABLE ROW LEVEL SECURITY'
-            ))
-            conn.execute(text(
-                f'REVOKE ALL PRIVILEGES ON TABLE public."{table_name}" '
-                "FROM PUBLIC, anon, authenticated"
-            ))
-        conn.execute(text(
-            "REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public "
-            "FROM PUBLIC, anon, authenticated"
-        ))
-        conn.execute(text(
-            "ALTER DEFAULT PRIVILEGES IN SCHEMA public "
-            "REVOKE ALL ON TABLES FROM PUBLIC, anon, authenticated"
-        ))
+        conn.execute(text(f"""
+            DO $trustcheck_security$
+            DECLARE
+                table_name text;
+            BEGIN
+                FOREACH table_name IN ARRAY ARRAY[{table_names}] LOOP
+                    EXECUTE format(
+                        'ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY',
+                        table_name
+                    );
+                    EXECUTE format(
+                        'REVOKE ALL PRIVILEGES ON TABLE public.%I FROM PUBLIC, anon, authenticated',
+                        table_name
+                    );
+                END LOOP;
+                EXECUTE 'REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC, anon, authenticated';
+                EXECUTE 'ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM PUBLIC, anon, authenticated';
+            END;
+            $trustcheck_security$;
+        """))

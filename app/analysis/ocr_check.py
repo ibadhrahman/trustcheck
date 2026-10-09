@@ -14,8 +14,12 @@ IMPORTANT:
 from __future__ import annotations
 
 import io
+import importlib.util
 import logging
+from pathlib import Path
 import re
+import shutil
+import threading
 import warnings
 from collections import Counter
 from typing import Optional
@@ -29,28 +33,50 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 from PIL import Image, ImageEnhance, ImageFilter, ImageOps
-import cv2
-import numpy as np
 
 _PIL_AVAILABLE = True
-_CV2_AVAILABLE = True
+_CV2_AVAILABLE = importlib.util.find_spec("cv2") is not None
 
 try:
     import pytesseract
-    # Quick availability check
-    pytesseract.get_tesseract_version()
-    _TESSERACT_AVAILABLE = True
+    _tesseract_cmd = pytesseract.pytesseract.tesseract_cmd
+    _TESSERACT_AVAILABLE = bool(
+        shutil.which(_tesseract_cmd) or Path(_tesseract_cmd).is_file()
+    )
 except Exception:
     pytesseract = None  # type: ignore
     _TESSERACT_AVAILABLE = False
 
-_RAPIDOCR_AVAILABLE = False
-try:
-    from rapidocr_onnxruntime import RapidOCR as _RapidOCR
-    _rapid_engine = _RapidOCR()
-    _RAPIDOCR_AVAILABLE = True
-except Exception:
-    pass
+_RAPIDOCR_INSTALLED = importlib.util.find_spec("rapidocr_onnxruntime") is not None
+_RAPIDOCR_LOAD_ATTEMPTED = False
+_RAPIDOCR_LOAD_FAILED = False
+_rapid_engine = None
+_rapid_engine_lock = threading.Lock()
+
+
+def _get_rapidocr_engine():
+    """Load the ONNX OCR model on first use instead of slowing server startup."""
+    global _RAPIDOCR_LOAD_ATTEMPTED, _RAPIDOCR_LOAD_FAILED, _rapid_engine
+
+    if not _RAPIDOCR_INSTALLED or _RAPIDOCR_LOAD_FAILED:
+        return None
+    if _rapid_engine is not None:
+        return _rapid_engine
+
+    with _rapid_engine_lock:
+        if _rapid_engine is not None or _RAPIDOCR_LOAD_FAILED:
+            return _rapid_engine
+        if _RAPIDOCR_LOAD_ATTEMPTED:
+            return None
+        _RAPIDOCR_LOAD_ATTEMPTED = True
+        try:
+            from rapidocr_onnxruntime import RapidOCR
+
+            _rapid_engine = RapidOCR()
+        except Exception as exc:
+            _RAPIDOCR_LOAD_FAILED = True
+            logger.warning("RapidOCR initialization failed: %s", type(exc).__name__)
+    return _rapid_engine
 
 
 def get_ocr_availability() -> dict:
@@ -58,7 +84,7 @@ def get_ocr_availability() -> dict:
         "deepseek": bool(settings.deepseek_enabled and bool((settings.deepseek_api_key or "").strip())),
         "gemini": bool(settings.gemini_enabled and bool((settings.gemini_api_key or "").strip())),
         "tesseract": _TESSERACT_AVAILABLE,
-        "rapidocr": _RAPIDOCR_AVAILABLE,
+        "rapidocr": _RAPIDOCR_INSTALLED and not _RAPIDOCR_LOAD_FAILED,
         "pillow": _PIL_AVAILABLE,
         "opencv": _CV2_AVAILABLE,
     }
@@ -390,14 +416,15 @@ def _ocr_tesseract(img_bytes: bytes) -> Optional[str]:
 
 
 def _ocr_rapidocr(img_bytes: bytes) -> Optional[str]:
-    if not _RAPIDOCR_AVAILABLE:
+    engine = _get_rapidocr_engine()
+    if engine is None:
         return None
     try:
         import numpy as np
         from PIL import Image
         img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
         arr = np.array(img)
-        result, _ = _rapid_engine(arr)
+        result, _ = engine(arr)
         if result:
             return "\n".join(r[1] for r in result)
         return None

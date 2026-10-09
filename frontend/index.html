@@ -466,23 +466,13 @@
               <span>trustcheck@gmail.com</span>
             </span>
           </a>
-          <!-- WhatsApp -->
-          <a href="https://wa.me/911234567890" class="cs-action" aria-label="Chat on WhatsApp" target="_blank" rel="noopener noreferrer">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
-            </svg>
-            <span class="cs-action-meta">
-              <span>WhatsApp</span>
-              <span>+91 1234567890</span>
-            </span>
-          </a>
         </div>
       </div>
 
       <div class="footer-divider" aria-hidden="true"></div>
 
       <div class="footer-row">
-        <span>© 2026 TrustCheck · Built for safer social commerce.</span>
+        <span>© <span data-current-year>2026</span> TrustCheck · Built for safer social commerce.</span>
         <span>Risk estimate only — not proof of payment.</span>
       </div>
     </div>
@@ -655,5 +645,6 @@
     })();
   </script>
 </div>
+<script>document.querySelectorAll('[data-current-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });</script>
 </body>
 </html>

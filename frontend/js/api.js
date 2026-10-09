@@ -187,14 +187,42 @@ function formatDate(iso) {
   return new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-function copyToClipboard(text, btn) {
-  navigator.clipboard.writeText(text).then(() => {
-    const orig = btn.textContent;
+async function copyToClipboard(text, btn) {
+  const value = String(text ?? '');
+  if (!value) {
+    showToast('Nothing to copy', 'error');
+    return;
+  }
+
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+    } else {
+      throw new Error('Clipboard API unavailable');
+    }
+  } catch {
+    const field = document.createElement('textarea');
+    field.value = value;
+    field.setAttribute('readonly', '');
+    field.style.position = 'fixed';
+    field.style.opacity = '0';
+    document.body.appendChild(field);
+    field.select();
+    const copied = document.execCommand('copy');
+    field.remove();
+    if (!copied) {
+      showToast('Copy failed — select and copy manually', 'error');
+      return;
+    }
+  }
+
+  if (btn) {
+    const originalText = btn.textContent;
     btn.textContent = '✓ Copied!';
     btn.disabled = true;
-    setTimeout(() => { btn.textContent = orig; btn.disabled = false; }, 2000);
-    showToast('Copied to clipboard', 'ok');
-  }).catch(() => showToast('Copy failed — select and copy manually', 'error'));
+    setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 2000);
+  }
+  showToast('Copied to clipboard', 'ok');
 }
 
 function statusBadge(status) {
@@ -235,7 +263,16 @@ function initSidebar(activePage) {
     const emailEl = document.getElementById('sidebar-email');
     if (avatar) avatar.textContent = initial;
     if (nameEl) nameEl.textContent = name || email;
-    if (emailEl) emailEl.textContent = email;
+    if (emailEl) {
+      if (email) {
+        const emailLink = document.createElement('a');
+        emailLink.href = `mailto:${email}`;
+        emailLink.textContent = email;
+        emailEl.replaceChildren(emailLink);
+      } else {
+        emailEl.textContent = '';
+      }
+    }
   }
 
   // Mobile sidebar toggle
@@ -252,4 +289,54 @@ function initSidebar(activePage) {
       overlay.classList.remove('show');
     });
   }
+  initSharedPageChrome();
 }
+
+function initSharedPageChrome() {
+  document.querySelectorAll('[data-current-year]').forEach((el) => {
+    el.textContent = String(new Date().getFullYear());
+  });
+
+  document.querySelectorAll('.sidebar-logo, .auth-logo').forEach((logo) => {
+    if (logo.closest('a')) return;
+    const link = document.createElement('a');
+    link.className = 'brand-home-link';
+    link.href = '/';
+    link.setAttribute('aria-label', 'TrustCheck home');
+    logo.parentNode.insertBefore(link, logo);
+    link.appendChild(logo);
+  });
+
+  document.querySelectorAll('.mobile-nav-bar .logo-text').forEach((logo) => {
+    if (logo.closest('a')) return;
+    const link = document.createElement('a');
+    link.className = 'brand-home-link mobile-brand-home-link';
+    link.href = '/';
+    link.setAttribute('aria-label', 'TrustCheck home');
+    logo.parentNode.insertBefore(link, logo);
+    link.appendChild(logo);
+  });
+
+  if (!document.querySelector('footer')) {
+    const footer = document.createElement('footer');
+    footer.className = 'app-contact-footer';
+    footer.innerHTML = `
+      <span>© <span data-current-year>${new Date().getFullYear()}</span> TrustCheck</span>
+      <a href="mailto:trustcheck@gmail.com">Email support: trustcheck@gmail.com</a>`;
+    document.body.appendChild(footer);
+  }
+
+  const footer = document.querySelector('.app-contact-footer');
+  const profile = getCurrentUser()?.profile || {};
+  const phone = String(profile.contact_phone || profile.phone || '').trim();
+  const telValue = phone.replace(/[^\d+]/g, '');
+  if (footer && phone && /^\+?\d{7,15}$/.test(telValue) && !footer.querySelector('[data-seller-phone]')) {
+    const phoneLink = document.createElement('a');
+    phoneLink.href = `tel:${telValue}`;
+    phoneLink.textContent = `Call ${phone}`;
+    phoneLink.dataset.sellerPhone = 'true';
+    footer.appendChild(phoneLink);
+  }
+}
+
+initSharedPageChrome();

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Verify Payment — TrustCheck</title>
-    <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="description" content="Analyze payment screenshots, compare receipt details with an order, and review duplicate and UTR risk signals.">
+  <link rel="icon" type="image/png" href="/logo.png">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -36,13 +37,13 @@
     <div class="page-body" style="max-width:820px;">
       <div class="alert alert-info">
         <span>ℹ️</span>
-        <span><strong>How to use:</strong> Enter your Order ID and the transaction/UTR ID your customer sent you. TrustCheck verifies duplicate references and computes risk estimates.</span>
+        <span><strong>How to use:</strong> Enter the Verification ID your buyer shared to load their saved screenshot analysis. You can also enter an Order ID and upload a screenshot to run a new check.</span>
       </div>
 
       <!-- Verification Form -->
       <div class="card" style="margin-top:1rem;">
         <h3 style="margin-bottom:1.25rem;">Payment Verification</h3>
-        <div id="verify-error" class="alert alert-error hidden"></div>
+        <div id="verify-error" class="alert alert-error hidden" role="alert" aria-live="assertive"></div>
 
         <form id="verify-form" novalidate>
           <div id="active-order-badge" class="alert alert-info hidden" style="margin-bottom:1.25rem;display:flex;align-items:center;justify-content:space-between;">
@@ -51,15 +52,15 @@
           </div>
 
           <div class="form-group" id="order-id-group">
-            <label class="form-label">Order ID <span class="required">*</span></label>
-            <input class="form-input mono" type="text" id="verify-order-id" placeholder="e.g. 1024 or #1024" required>
-            <div class="form-hint">Enter the Order ID you want to verify against.</div>
+            <label class="form-label">Order ID or Buyer Verification ID <span class="required">*</span></label>
+            <input class="form-input mono" type="text" id="verify-order-id" required>
+            <div class="form-hint">Paste the buyer’s TXN verification ID to view saved analysis, or enter an Order ID for a new screenshot check.</div>
           </div>
 
 
 
           <div class="form-group">
-            <label class="form-label">Payment Screenshot <span style="color:var(--text-muted);">(optional for DeepSeek AI vision & OCR extraction)</span></label>
+            <label class="form-label">Payment Screenshot <span style="color:var(--text-muted);">(optional when checking an existing verification ID)</span></label>
             <div class="upload-zone" id="upload-zone">
               <input type="file" id="screenshot-input" accept="image/jpeg,image/png,image/webp">
               <div class="upload-icon">📸</div>
@@ -162,6 +163,20 @@
         <div id="dup-detail-card" class="card hidden" style="margin-top:1rem;border-color:rgba(239,68,68,0.3);">
           <h4 style="color:var(--color-error);margin-bottom:0.5rem;">⚠️ Duplicate Reference Warning</h4>
           <p id="dup-detail-text" style="font-size:0.875rem;"></p>
+        </div>
+
+        <div id="screenshot-analysis-card" class="card hidden screenshot-analysis-card" style="margin-top:1rem;">
+          <h4 style="margin-bottom:0.35rem;">Screenshot Analysis</h4>
+          <p style="margin:0 0 0.9rem;color:var(--text-secondary);font-size:0.82rem;">OCR, image, and duplicate checks for this submission. The raw screenshot is not stored.</p>
+          <div id="analysis-stat-grid" class="analysis-stat-grid"></div>
+          <div id="analysis-findings-section" class="hidden" style="margin-top:1rem;">
+            <h5 style="margin-bottom:0.45rem;">Findings</h5>
+            <ul id="analysis-findings" class="analysis-findings"></ul>
+          </div>
+          <div id="analysis-observations-section" class="hidden" style="margin-top:1rem;">
+            <h5 style="margin-bottom:0.45rem;">Observations</h5>
+            <ul id="analysis-observations" class="analysis-findings"></ul>
+          </div>
         </div>
 
         <!-- Action card -->

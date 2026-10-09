@@ -2,6 +2,7 @@
 Unit tests for forensics, duplicate detection, and payment cross-verification.
 """
 import io
+import json
 
 from PIL import Image
 
@@ -294,6 +295,117 @@ def test_analysis_details_are_saved_for_seller_dashboard(
     assert latest["duplicates"]["transaction_reference"]["duplicate_found"] is True
     assert latest["duplicates"]["screenshot"]["duplicate_found"] is True
     assert latest["disclaimer"] == "Risk estimate only — not proof of payment."
+
+
+def _create_saved_verification(db_session, test_user, verification_tx_id="TXN-ABCD-EFGH"):
+    order = Order(
+        seller_id=test_user.id,
+        expected_amount=100.0,
+        expected_payee_name="Artisan Store",
+        status="pending",
+    )
+    db_session.add(order)
+    db_session.commit()
+    db_session.refresh(order)
+    submission = PaymentSubmission(
+        order_id=order.id,
+        seller_id=test_user.id,
+        verification_tx_id=verification_tx_id,
+        screenshot_sha256="a" * 64,
+        screenshot_phash="0123456789abcdef",
+        screenshot_file_size=4096,
+        extracted_amount=80.0,
+        extracted_tx_id="UPI-REF-12345",
+        extracted_payee_name="Different Payee",
+        risk_score=60,
+        risk_verdict="suspicious",
+        risk_reasons_json=json.dumps([{"level": "error", "text": "Amount mismatch."}]),
+        extracted_json=json.dumps({
+            "amount": 80.0,
+            "tx_id": "UPI-REF-12345",
+            "utr": "UPI-REF-12345",
+            "payee_name": "Different Payee",
+            "viewpoint": "payer",
+        }),
+        forensics_json=json.dumps({
+            "image_width": 320,
+            "image_height": 640,
+            "file_size_bytes": 4096,
+            "has_exif": True,
+            "exif_safe_fields": {"Software": "Test Editor"},
+            "ela_score": 9.5,
+            "findings": [{"check": "exif_software", "level": "warning", "detail": "Edited software detected."}],
+        }),
+        duplicate_json=json.dumps({
+            "transaction_reference": {"duplicate_found": False},
+            "screenshot": {"duplicate_found": True, "message": "This screenshot was seen before."},
+        }),
+        comparison_json=json.dumps({
+            "expected_amount": 100.0,
+            "expected_payee_name": "Artisan Store",
+            "amount_match": False,
+            "payee_name_match": False,
+        }),
+    )
+    db_session.add(submission)
+    db_session.commit()
+    return order, submission
+
+
+def test_seller_verification_reference_returns_saved_analysis_without_new_submission(
+    client, test_user, db_session, auth_headers
+):
+    _, submission = _create_saved_verification(db_session, test_user)
+
+    response = client.post(
+        "/api/payments/cross-verify",
+        data={"order_referral_code": submission.verification_tx_id},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["submission_id"] == submission.id
+    assert data["extracted_fields"]["amount"] == 80.0
+    assert data["comparison"]["amount_match"] is False
+    assert data["forensics"]["exif_safe_fields"]["Software"] == "Test Editor"
+    assert data["duplicates"]["screenshot"]["duplicate_found"] is True
+    assert data["risk"]["verdict"] == "suspicious"
+    assert db_session.query(PaymentSubmission).count() == 1
+
+
+def test_verification_reference_requires_seller_login(client, test_user, db_session):
+    _, submission = _create_saved_verification(db_session, test_user)
+
+    response = client.post(
+        "/api/payments/cross-verify",
+        data={"order_referral_code": submission.verification_tx_id},
+    )
+
+    assert response.status_code == 401
+
+
+def test_verification_reference_is_scoped_to_owning_seller(client, test_user, db_session):
+    from app.auth import create_access_token
+    from app.models import User
+
+    _, submission = _create_saved_verification(db_session, test_user)
+    other_seller = User(
+        email="other_seller@trustcheck.com",
+        hashed_password="unused",
+        is_active=True,
+    )
+    db_session.add(other_seller)
+    db_session.commit()
+    other_headers = {"Authorization": f"Bearer {create_access_token(other_seller.id)}"}
+
+    response = client.post(
+        "/api/payments/cross-verify",
+        data={"order_referral_code": submission.verification_tx_id},
+        headers=other_headers,
+    )
+
+    assert response.status_code == 404
 
 
 def test_seller_history_corrects_old_exif_genuine_verdict(client, test_user, db_session, auth_headers):

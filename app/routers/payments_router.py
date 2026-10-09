@@ -59,6 +59,108 @@ def _validate_screenshot(file: UploadFile) -> bytes:
     return data
 
 
+def _load_json_dict(value: Optional[str]) -> dict:
+    if not value:
+        return {}
+    try:
+        parsed = json.loads(value)
+        return parsed if isinstance(parsed, dict) else {}
+    except (TypeError, ValueError):
+        return {}
+
+
+def _stored_submission_result(submission: PaymentSubmission) -> CrossVerifyResult:
+    """Return the saved analysis for a seller-provided buyer verification ID."""
+    order = submission.order
+    extracted = _load_json_dict(submission.extracted_json)
+    forensics = _load_json_dict(submission.forensics_json)
+    duplicates = _load_json_dict(submission.duplicate_json)
+    comparison = _load_json_dict(submission.comparison_json)
+    if not comparison:
+        comparison = {
+            "expected_amount": order.expected_amount,
+            "expected_payee_name": order.expected_payee_name,
+            "extracted_amount": submission.extracted_amount,
+            "extracted_payee_name": submission.extracted_payee_name,
+            "extracted_tx_id": submission.extracted_tx_id,
+        }
+
+    reasons = []
+    if submission.risk_reasons_json:
+        try:
+            parsed_reasons = json.loads(submission.risk_reasons_json)
+            if isinstance(parsed_reasons, list):
+                reasons = [
+                    RiskReason.model_validate(reason)
+                    for reason in parsed_reasons
+                    if isinstance(reason, dict)
+                ]
+        except (TypeError, ValueError):
+            reasons = []
+
+    npci_validation = comparison.get("npci_validation")
+    risk = RiskResult(
+        score=submission.risk_score or 0,
+        verdict=submission.risk_verdict or "careful",
+        reasons=reasons,
+        details={"npci_validation": npci_validation} if npci_validation else {},
+        npci_validation=npci_validation,
+    )
+
+    extracted_fields = None
+    if extracted:
+        extracted_fields = ExtractedPaymentFields.model_validate(extracted)
+    elif any((submission.extracted_amount is not None, submission.extracted_tx_id, submission.extracted_payee_name)):
+        extracted_fields = ExtractedPaymentFields(
+            amount=submission.extracted_amount,
+            tx_id=submission.extracted_tx_id,
+            utr=submission.extracted_tx_id,
+            payee_name=submission.extracted_payee_name,
+            date_str=submission.extracted_date,
+            viewpoint=submission.screenshot_viewpoint or "unknown",
+        )
+
+    transaction_duplicate = duplicates.get("transaction_reference") or {}
+    screenshot_duplicate = duplicates.get("screenshot") or {}
+    duplicate_matches = [
+        duplicate.get("message") or f"{label} duplicate detected."
+        for label, duplicate in (
+            ("Transaction reference", transaction_duplicate),
+            ("Screenshot", screenshot_duplicate),
+        )
+        if duplicate.get("duplicate_found")
+    ]
+
+    return CrossVerifyResult(
+        order_id=order.id,
+        order_referral_code=(order.referral_code.code if order.referral_code else submission.verification_tx_id or ""),
+        verification_tx_id=submission.verification_tx_id,
+        expected_amount=order.expected_amount,
+        expected_payee_name=order.expected_payee_name,
+        expected_upi_id=order.expected_upi_id,
+        extracted_fields=extracted_fields,
+        extracted=extracted or None,
+        comparison=comparison or None,
+        submitted_tx_id=submission.submitted_tx_id,
+        risk=risk,
+        duplicate_warning=bool(duplicate_matches),
+        duplicate_details=" ".join(duplicate_matches) or None,
+        submission_id=submission.id,
+        npci_validation=npci_validation,
+        forensics=forensics or None,
+        duplicates=duplicates or None,
+        image_metadata=(
+            {
+                "sha256": submission.screenshot_sha256,
+                "phash": submission.screenshot_phash,
+                "file_size_bytes": submission.screenshot_file_size,
+            }
+            if submission.screenshot_sha256 or submission.screenshot_phash
+            else None
+        ),
+    )
+
+
 def _compute_risk(
     order: Order,
     extracted: Optional[dict],
@@ -307,14 +409,22 @@ async def cross_verify_payment(
                 raise HTTPException(status_code=403, detail="Access denied.")
             order = order_by_id
 
-    # 1. Resolve order code (TC-XXXXXXXX) or Verification ID (TXN-XXXX-XXXX)
-    if not order:
-        if code_cleaned.startswith("TXN-"):
-            sub = db.query(PaymentSubmission).filter(PaymentSubmission.verification_tx_id == code_cleaned).first()
-            if sub and sub.order:
-                if current_user and sub.seller_id != current_user.id:
-                    raise HTTPException(status_code=403, detail="Access denied.")
-                order = sub.order
+    # A buyer verification ID identifies an existing saved analysis. Only its
+    # owning seller may retrieve it, and reading it must not create a new scan.
+    if code_cleaned.startswith("TXN-"):
+        if not current_user:
+            raise HTTPException(status_code=401, detail="Sign in as the seller to view this verification.")
+        submission = (
+            db.query(PaymentSubmission)
+            .filter(
+                PaymentSubmission.verification_tx_id == code_cleaned,
+                PaymentSubmission.seller_id == current_user.id,
+            )
+            .first()
+        )
+        if not submission or not submission.order:
+            raise HTTPException(status_code=404, detail="Verification reference not found.")
+        return _stored_submission_result(submission)
 
     if not order:
         orc = resolve_order_referral_code(db, code_cleaned)
@@ -422,6 +532,7 @@ async def cross_verify_payment(
             )
             if ext_payee and order.expected_payee_name else None
         ),
+        "npci_validation": risk.npci_validation,
     }
 
     def duplicate_snapshot(result: Optional[dict]) -> dict:
@@ -545,6 +656,17 @@ async def cross_verify_payment(
         ),
         submission_id=submission.id,
         npci_validation=risk.npci_validation,
+        forensics=forensics_result,
+        duplicates=duplicate_summary,
+        image_metadata=(
+            {
+                "sha256": img_sha256,
+                "phash": img_phash,
+                "file_size_bytes": len(img_data) if img_data else None,
+            }
+            if img_data
+            else None
+        ),
     )
 
 
@@ -586,6 +708,24 @@ def payment_history(
             s.comparison_json = json.dumps(comparison, ensure_ascii=False)
             repaired_records = True
         forensics = load_json(s.forensics_json)
+        extracted_fields = load_json(s.extracted_json) or {}
+        npci_validation = (comparison or {}).get("npci_validation")
+        if not npci_validation:
+            reference = (
+                extracted_fields.get("utr")
+                or extracted_fields.get("tx_id")
+                or s.extracted_tx_id
+                or s.submitted_tx_id
+            )
+            if reference:
+                npci_validation = validate_utr_npci(
+                    reference,
+                    claimed_date=extracted_fields.get("date_str") or s.extracted_date,
+                ).to_dict()
+                comparison = comparison or {}
+                comparison["npci_validation"] = npci_validation
+                s.comparison_json = json.dumps(comparison, ensure_ascii=False)
+                repaired_records = True
         forensic_warning_found = bool(
             forensics and any(
                 finding.get("level") == "warning"
@@ -611,7 +751,7 @@ def payment_history(
             "extracted_amount": s.extracted_amount,
             "extracted_tx_id": s.extracted_tx_id,
             "extracted_payee_name": s.extracted_payee_name,
-            "extracted_fields": load_json(s.extracted_json),
+            "extracted_fields": extracted_fields,
             "forensics": forensics,
             "duplicates": load_json(s.duplicate_json),
             "comparison": comparison,

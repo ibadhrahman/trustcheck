@@ -76,6 +76,22 @@ async function loadVerifications() {
       const amountValue = extracted.amount ?? h.extracted_amount;
       const payeeValue = extracted.payee_name || h.extracted_payee_name;
       const txRef = h.submitted_tx_id || extracted.tx_id || extracted.utr || h.extracted_tx_id;
+      const npci = comparison.npci_validation || null;
+      const npciVerdicts = {
+        valid: 'Julian-cycle check passed',
+        impossible_julian_day: 'Impossible Julian day',
+        future_utr: 'Reference date is in the future',
+        year_mismatch: 'Reference year does not match',
+        stale_utr: 'Reference may be stale',
+        format_invalid: 'Reference format not recognized',
+      };
+      const npciLabel = npci
+        ? (npciVerdicts[npci.verdict] || 'Could not validate reference')
+        : 'Not checked — no readable transaction reference';
+      const npciDetail = npci?.detail || '';
+      const npciDay = npci?.decoded_julian_day != null
+        ? `Julian day ${String(npci.decoded_julian_day).padStart(3, '0')}`
+        : '';
       const safe = (value) => escapeHtml(value == null || value === '' ? '—' : String(value));
       const expectedAmount = comparison.expected_amount;
       const expectedPayee = comparison.expected_payee_name;
@@ -142,6 +158,7 @@ async function loadVerifications() {
                 ${fieldLine('Amount', expectedAmount, amountValue, comparison.amount_match, true)}
                 ${fieldLine('Payee', expectedPayee, payeeValue, comparison.payee_name_match)}
                 <li><strong>UPI ID seen:</strong> ${safe(extracted.payee_upi_id)} <span style="color:var(--text-muted);">(reference only; not checked)</span></li>
+                <li><strong>NPCI Julian-cycle audit:</strong> ${safe(npciLabel)}${npciDay ? ` · ${safe(npciDay)}` : ''}${npciDetail ? ` — ${safe(npciDetail)}` : ''}</li>
                 <li><strong>Image / EXIF:</strong> ${safe(imageCheck)}${elaSummary ? ` <span style="color:var(--text-muted);">${safe(elaSummary)}</span>` : ''}</li>
                 ${duplicateLine('Screenshot duplicate', imageDuplicate)}
                 ${duplicateLine('Transaction reference duplicate', txDuplicate)}

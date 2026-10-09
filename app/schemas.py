@@ -230,6 +230,9 @@ class CrossVerifyResult(BaseModel):
     duplicate_details: Optional[str] = None
     submission_id: Optional[int] = None
     npci_validation: Optional[dict[str, Any]] = None
+    forensics: Optional[dict[str, Any]] = None
+    duplicates: Optional[dict[str, Any]] = None
+    image_metadata: Optional[dict[str, Any]] = None
 
 
 # ---------------------------------------------------------------------------

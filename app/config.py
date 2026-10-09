@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     # Gemini Multimodal AI (Optional)
     gemini_api_key: Optional[str] = None
     gemini_model: str = "gemini-2.5-flash"
-    gemini_enabled: bool = False
+    gemini_enabled: bool = True
     gemini_timeout_seconds: int = 15
     gemini_max_retries: int = 0
 

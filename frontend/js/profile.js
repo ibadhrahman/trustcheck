@@ -32,7 +32,14 @@
 
   // 1. Populate Account Details
   if (user && user.user) {
-    accEmail.textContent = user.user.email || '—';
+    if (user.user.email) {
+      const accountEmailLink = document.createElement('a');
+      accountEmailLink.href = `mailto:${user.user.email}`;
+      accountEmailLink.textContent = user.user.email;
+      accEmail.replaceChildren(accountEmailLink);
+    } else {
+      accEmail.textContent = '—';
+    }
     accId.textContent = `#${user.user.id}`;
     accCreated.textContent = formatDate(user.user.created_at);
   }
@@ -43,9 +50,12 @@
       const res = await api.getSellerCode();
       currentSellerCode = res.seller_referral_code || '';
       sellerCodeDisplay.textContent = currentSellerCode;
-      shareableBioText.textContent = `Official TrustCheck Verified Seller Code: ${currentSellerCode} · Verify orders at trustcheck.local`;
+      shareableBioText.textContent = `Official TrustCheck Verified Seller Code: ${currentSellerCode} · Verify orders at ${window.location.origin}`;
+      copySellerCodeBtn.disabled = !currentSellerCode;
+      copyBioBtn.disabled = !currentSellerCode;
     } catch (err) {
       sellerCodeDisplay.textContent = 'Error loading code';
+      shareableBioText.textContent = 'Could not load the seller code. Please try again.';
     }
   }
 
@@ -113,6 +123,7 @@
       // Refresh sidebar cache
       const updatedUser = await api.me();
       localStorage.setItem('tc_user', JSON.stringify(updatedUser));
+      initSharedPageChrome();
       initSidebar('profile');
     } catch (err) {
       showError(profileError, err.message);

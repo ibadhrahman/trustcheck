@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Orders — TrustCheck</title>
-    <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="description" content="Create and manage customer orders, referral codes, and payment status in TrustCheck.">
+  <link rel="icon" type="image/png" href="/logo.png">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -39,12 +40,12 @@
       <!-- Create Order Form (hidden by default) -->
       <div class="card" id="create-order-panel" style="display:none;margin-bottom:1.5rem;">
         <h3 style="margin-bottom:1.25rem;">Create New Order</h3>
-        <div id="create-order-error" class="alert alert-error hidden"></div>
+        <div id="create-order-error" class="alert alert-error hidden" role="alert" aria-live="assertive"></div>
         <form id="create-order-form" novalidate>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Product Name / Item</label>
-              <input class="form-input" type="text" id="order-product" placeholder="e.g. Handcrafted Silk Scarf">
+              <input class="form-input" type="text" id="order-product">
             </div>
             <div class="form-group">
               <label class="form-label">Quantity</label>
@@ -54,16 +55,16 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Expected Amount (₹) <span class="required">*</span></label>
-              <input class="form-input" type="number" id="order-amount" placeholder="0.00" min="0.01" step="0.01" required>
+              <input class="form-input" type="number" id="order-amount" min="0.01" step="0.01" required>
             </div>
             <div class="form-group">
               <label class="form-label">Payee Name</label>
-              <input class="form-input" type="text" id="order-payee" placeholder="Your business name">
+              <input class="form-input" type="text" id="order-payee">
             </div>
           </div>
           <div class="form-group">
             <label class="form-label">Private Note</label>
-            <textarea class="form-input" id="order-note" placeholder="Internal note — not shared with customer" maxlength="1000" rows="2"></textarea>
+            <textarea class="form-input" id="order-note" maxlength="1000" rows="2"></textarea>
           </div>
           <div style="display:flex;gap:0.75rem;">
             <button type="submit" class="btn btn-primary" id="create-order-btn">Create Order</button>
@@ -74,7 +75,7 @@
 
       <!-- Order created success: referral code display -->
       <div class="card hidden" id="new-order-result" style="margin-bottom:1.5rem;">
-        <div class="alert alert-ok" style="margin-bottom:1rem;">✅ Order created successfully!</div>
+          <div class="alert alert-ok" role="status" aria-live="polite" style="margin-bottom:1rem;">✅ Order created successfully!</div>
         <h4 style="margin-bottom:0.5rem;">Share this referral code with your customer:</h4>
         <div class="referral-box">
           <div class="referral-code" id="new-order-code">—</div>
@@ -90,7 +91,7 @@
 
       <!-- Search -->
       <div style="display:flex;gap:0.75rem;margin-bottom:1.25rem;flex-wrap:wrap;">
-        <input class="form-input" type="text" id="search-code" placeholder="Search by referral code…" style="max-width:280px;">
+        <input class="form-input" type="text" id="search-code" aria-label="Search by referral code" style="max-width:280px;">
         <button class="btn btn-secondary btn-sm" id="btn-search">Search</button>
         <button class="btn btn-ghost btn-sm" id="btn-reset">Clear</button>
       </div>

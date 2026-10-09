@@ -84,7 +84,7 @@ def _ela_score(img_bytes: bytes, quality: int = 90) -> Optional[float]:
     Higher scores suggest potential re-compression or editing artefacts.
     Returns None if unavailable.
     """
-    if not _PIL_AVAILABLE or not _CV2_AVAILABLE:
+    if not _PIL_AVAILABLE:
         return None
     try:
         original = Image.open(io.BytesIO(img_bytes)).convert("RGB")

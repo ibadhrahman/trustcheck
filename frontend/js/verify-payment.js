@@ -129,11 +129,7 @@ function renderResult(r) {
 
   const copyBtn = document.getElementById('btn-copy-txid');
   if (copyBtn) {
-    copyBtn.onclick = () => {
-      navigator.clipboard.writeText(vTxId).then(() => {
-        showToast('Verification Transaction ID copied: ' + vTxId, 'ok');
-      });
-    };
+    copyBtn.onclick = () => copyToClipboard(vTxId, copyBtn);
   }
 
   const risk = r.risk;
@@ -148,7 +144,7 @@ function renderResult(r) {
   // Reasons
   const icons = { ok: '✅', warning: '⚠️', error: '🚨' };
   document.getElementById('risk-reasons').innerHTML = risk.reasons.map(r =>
-    `<div class="reason-item ${r.level}"><span class="reason-icon">${icons[r.level] || '•'}</span><span>${r.text}</span></div>`
+    `<div class="reason-item ${escapeAnalysisText(r.level)}"><span class="reason-icon">${icons[r.level] || '•'}</span><span>${escapeAnalysisText(r.text)}</span></div>`
   ).join('');
 
   document.getElementById('risk-disclaimer').textContent = risk.disclaimer;
@@ -247,17 +243,19 @@ function renderResult(r) {
   rows.forEach(row => {
     const expCell = document.createElement('div');
     expCell.className = 'compare-cell';
-    expCell.innerHTML = `<span style="font-size:0.72rem;color:var(--text-muted);display:block;">${row.label}</span>${row.exp}`;
+    expCell.innerHTML = `<span style="font-size:0.72rem;color:var(--text-muted);display:block;">${escapeAnalysisText(row.label)}</span>${escapeAnalysisText(row.exp)}`;
 
     const gotCell = document.createElement('div');
     const gotText = row.got != null ? row.got : '<span class="unknown">Not detected</span>';
     const cls = row.got == null ? 'unknown' : row.match === true ? 'match' : row.match === false ? 'mismatch' : '';
     gotCell.className = `compare-cell ${cls}`;
-    gotCell.innerHTML = `<span style="font-size:0.72px;color:transparent;display:block;">${row.label}</span>${gotText}`;
+    gotCell.innerHTML = row.got != null ? escapeAnalysisText(gotText) : gotText;
 
     grid.appendChild(expCell);
     grid.appendChild(gotCell);
   });
+
+  renderSavedScreenshotAnalysis(r);
 
   // Confirm / flag buttons
   document.getElementById('btn-confirm-payment').onclick = async () => {
@@ -274,6 +272,80 @@ function renderResult(r) {
       showToast('Order flagged for review.', 'warning');
     } catch (e) { showToast(e.message, 'error'); }
   };
+}
+
+function renderSavedScreenshotAnalysis(result) {
+  const card = document.getElementById('screenshot-analysis-card');
+  if (!card) return;
+
+  const forensics = result.forensics || {};
+  const extracted = result.extracted_fields || result.extracted || {};
+  const duplicates = result.duplicates || {};
+  const imageMetadata = result.image_metadata || {};
+  const hasScreenshotAnalysis = Boolean(
+    Object.keys(forensics).length || Object.keys(extracted).length || Object.keys(imageMetadata).length
+  );
+  if (!hasScreenshotAnalysis) {
+    card.classList.add('hidden');
+    return;
+  }
+  card.classList.remove('hidden');
+
+  const stats = [];
+  const addStat = (label, value) => {
+    if (value == null || value === '') return;
+    stats.push(`<div class="analysis-stat"><span class="analysis-stat-label">${escapeAnalysisText(label)}</span><span class="analysis-stat-value">${escapeAnalysisText(value)}</span></div>`);
+  };
+  const duplicateStatus = (value) => {
+    if (!value) return 'Not available';
+    return value.duplicate_found ? 'Possible duplicate found' : 'No match detected';
+  };
+  const width = forensics.image_width;
+  const height = forensics.image_height;
+  if (width && height) addStat('Image dimensions', `${width} × ${height}`);
+  const fileSize = imageMetadata.file_size_bytes ?? forensics.file_size_bytes;
+  if (fileSize != null) addStat('Image size', `${Number(fileSize).toLocaleString()} bytes`);
+  if (typeof forensics.has_exif === 'boolean') addStat('EXIF metadata', forensics.has_exif ? 'Present' : 'Not present');
+  const software = forensics.exif_safe_fields?.Software;
+  if (software) addStat('Editing software', software);
+  if (forensics.ela_score != null) {
+    const ela = Number(forensics.ela_score);
+    addStat('Error Level Analysis', Number.isFinite(ela) ? ela.toFixed(2) : forensics.ela_score);
+  }
+  if (extracted.engine_used) addStat('OCR engine', extracted.engine_used);
+  if (extracted.ocr_confidence != null) addStat('OCR confidence', `${Math.round(Number(extracted.ocr_confidence) * 100)}%`);
+  if (extracted.viewpoint) addStat('Screenshot viewpoint', extracted.viewpoint);
+  if (extracted.date_str) addStat('Payment date', extracted.date_str);
+  if (extracted.time_str) addStat('Payment time', extracted.time_str);
+  if (extracted.app_indicator) addStat('Payment app', extracted.app_indicator);
+  if (duplicates.transaction_reference || duplicates.screenshot) {
+    addStat('Transaction reference check', duplicateStatus(duplicates.transaction_reference));
+    addStat('Screenshot duplicate check', duplicateStatus(duplicates.screenshot));
+  }
+  if (imageMetadata.sha256) addStat('SHA-256', imageMetadata.sha256);
+  if (imageMetadata.phash) addStat('Perceptual hash', imageMetadata.phash);
+  document.getElementById('analysis-stat-grid').innerHTML = stats.join('');
+
+  const findings = Array.isArray(forensics.findings) ? forensics.findings : [];
+  const findingsSection = document.getElementById('analysis-findings-section');
+  findingsSection.classList.toggle('hidden', findings.length === 0);
+  document.getElementById('analysis-findings').innerHTML = findings.map((finding) => {
+    const level = finding.level ? `${String(finding.level).toUpperCase()}: ` : '';
+    return `<li><strong>${escapeAnalysisText(level)}</strong>${escapeAnalysisText(finding.detail || finding.check || 'Image check completed.')}</li>`;
+  }).join('');
+
+  const observations = Array.isArray(forensics.observations) ? forensics.observations : [];
+  const observationSection = document.getElementById('analysis-observations-section');
+  observationSection.classList.toggle('hidden', observations.length === 0);
+  document.getElementById('analysis-observations').innerHTML = observations
+    .map(observation => `<li>${escapeAnalysisText(observation)}</li>`)
+    .join('');
+}
+
+function escapeAnalysisText(value) {
+  return String(value ?? '').replace(/[&<>"']/g, char => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[char]));
 }
 
 async function loadHistory() {

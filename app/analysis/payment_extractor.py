@@ -2,9 +2,8 @@
 app/analysis/payment_extractor.py
 
 Unified payment extraction pipeline for TrustCheck.
-Prioritizes DeepSeek V4.1 Flash Multimodal AI for high-accuracy direct image understanding.
-Falls back seamlessly to local multi-pass OCR (RapidOCR / Tesseract) if DeepSeek is
-disabled, unconfigured, or unreachable.
+Prioritizes DeepSeek V4.1 Flash Multimodal AI, then uses Gemini when enabled,
+and falls back to local multi-pass OCR (RapidOCR / Tesseract) if both are unavailable.
 """
 from __future__ import annotations
 
@@ -47,9 +46,9 @@ async def extract_payment_screenshot_details_async(
             deepseek_result = await analyze_payment_screenshot_deepseek_async(img_bytes=img_bytes)
             if deepseek_result is not None:
                 return deepseek_extraction_to_fields_dict(deepseek_result)
-            logger.warning("DeepSeek returned empty result. Falling back to local OCR pipeline.")
+            logger.warning("DeepSeek returned no result; trying Gemini fallback if enabled.")
         except Exception as exc:
-            logger.warning("DeepSeek extraction error: %s. Falling back.", type(exc).__name__)
+            logger.warning("DeepSeek extraction error: %s; trying Gemini fallback if enabled.", type(exc).__name__)
 
     # 2. Optional Gemini fallback if enabled
     if getattr(settings, "gemini_enabled", False):
@@ -63,7 +62,7 @@ async def extract_payment_screenshot_details_async(
                 if gemini_result is not None:
                     return gemini_extraction_to_fields_dict(gemini_result)
         except Exception as exc:
-            logger.debug("Gemini fallback skipped: %s", exc)
+            logger.warning("Gemini fallback skipped: %s", type(exc).__name__)
 
     # 3. Fallback to local OCR pipeline
     logger.info("Analyzing payment screenshot using local OCR pipeline")
@@ -89,9 +88,24 @@ def extract_payment_screenshot_details_sync(
             deepseek_result = analyze_payment_screenshot_deepseek_sync(img_bytes=img_bytes)
             if deepseek_result is not None:
                 return deepseek_extraction_to_fields_dict(deepseek_result)
+            logger.warning("DeepSeek returned no result; trying Gemini fallback if enabled.")
         except Exception as exc:
-            logger.warning("DeepSeek sync extraction error: %s. Falling back.", type(exc).__name__)
+            logger.warning("DeepSeek sync extraction error: %s; trying Gemini fallback if enabled.", type(exc).__name__)
 
+    if settings.gemini_enabled:
+        try:
+            if get_gemini_client() is not None:
+                gemini_result = analyze_payment_screenshot_gemini_sync(
+                    img_bytes=img_bytes,
+                    expected_amount=expected_amount,
+                    expected_payee_name=expected_payee_name,
+                )
+                if gemini_result is not None:
+                    return gemini_extraction_to_fields_dict(gemini_result)
+        except Exception as exc:
+            logger.warning("Gemini sync fallback skipped: %s", type(exc).__name__)
+
+    logger.info("Analyzing payment screenshot using local OCR pipeline")
     local_result = extract_payment_fields(
         img_bytes=img_bytes,
         expected_amount=expected_amount,

@@ -21,35 +21,35 @@
     <h1 class="auth-title">Create your account</h1>
     <p class="auth-sub">Start verifying payments and protecting your business</p>
 
-    <div id="reg-error" class="alert alert-error hidden"></div>
-    <div id="reg-success" class="alert alert-ok hidden"></div>
+    <div id="reg-error" class="alert alert-error hidden" role="alert" aria-live="assertive"></div>
+    <div id="reg-success" class="alert alert-ok hidden" role="status" aria-live="polite"></div>
 
     <form id="register-form" novalidate>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" for="business_name">Business Name</label>
-          <input class="form-input" type="text" id="business_name" placeholder="My Shop" maxlength="200">
+          <input class="form-input" type="text" id="business_name" maxlength="200">
         </div>
         <div class="form-group">
           <label class="form-label" for="contact_name">Your Name</label>
-          <input class="form-input" type="text" id="contact_name" placeholder="Priya Sharma" maxlength="200">
+          <input class="form-input" type="text" id="contact_name" maxlength="200">
         </div>
       </div>
 
       <div class="form-group">
         <label class="form-label" for="email">Email <span class="required">*</span></label>
-        <input class="form-input" type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
-        <div class="form-error hidden" id="email-error"></div>
+        <input class="form-input" type="email" id="email" autocomplete="email" required>
+        <div class="form-error hidden" id="email-error" role="alert"></div>
       </div>
 
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" for="phone">Phone</label>
-          <input class="form-input" type="tel" id="phone" placeholder="+91 98765 43210" maxlength="20">
+          <input class="form-input" type="tel" id="phone" maxlength="20">
         </div>
         <div class="form-group">
           <label class="form-label" for="upi_id">UPI ID</label>
-          <input class="form-input" type="text" id="upi_id" placeholder="name@upi" maxlength="100">
+          <input class="form-input" type="text" id="upi_id" maxlength="100">
           <div class="form-hint">Used for order payment details</div>
         </div>
       </div>
@@ -57,13 +57,13 @@
       <div class="form-row">
         <div class="form-group">
           <label class="form-label" for="password">Password <span class="required">*</span></label>
-          <input class="form-input" type="password" id="password" placeholder="Min 8 characters" autocomplete="new-password" required minlength="8">
-          <div class="form-error hidden" id="password-error"></div>
+          <input class="form-input" type="password" id="password" autocomplete="new-password" required minlength="8">
+          <div class="form-error hidden" id="password-error" role="alert"></div>
         </div>
         <div class="form-group">
           <label class="form-label" for="confirm_password">Confirm Password <span class="required">*</span></label>
-          <input class="form-input" type="password" id="confirm_password" placeholder="Repeat password" autocomplete="new-password" required>
-          <div class="form-error hidden" id="confirm-error"></div>
+          <input class="form-input" type="password" id="confirm_password" autocomplete="new-password" required>
+          <div class="form-error hidden" id="confirm-error" role="alert"></div>
         </div>
       </div>
 

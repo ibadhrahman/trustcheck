@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Seller Profile & Settings — TrustCheck</title>
-    <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="description" content="Update your TrustCheck seller profile, business contact details, and referral code settings.">
+  <link rel="icon" type="image/png" href="/logo.png">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
@@ -66,59 +67,57 @@
               Share this permanent code in your Instagram/WhatsApp bio or stories so customers can verify your store identity.
             </p>
           </div>
-          <button class="btn btn-secondary btn-sm" id="copy-seller-code-btn">📋 Copy Code</button>
+          <button class="btn btn-secondary btn-sm" id="copy-seller-code-btn" disabled>📋 Copy Code</button>
         </div>
 
         <div style="margin-top:1rem;background:rgba(0,0,0,0.3);padding:0.75rem 1rem;border-radius:var(--radius-sm);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
-          <div style="font-size:0.85rem;color:var(--text-primary);font-style:italic;" id="shareable-bio-text">
-            "Official TrustCheck Verified Seller Code: [Loading...]"
-          </div>
-          <button class="btn btn-ghost btn-sm" id="copy-bio-btn">Copy Bio Snippet</button>
+          <div style="font-size:0.85rem;color:var(--text-primary);font-style:italic;" id="shareable-bio-text" aria-live="polite"></div>
+          <button class="btn btn-ghost btn-sm" id="copy-bio-btn" disabled>Copy Bio Snippet</button>
         </div>
       </div>
 
       <!-- Profile Settings Form -->
       <div class="card">
         <h3 style="margin-bottom:1.25rem;">Business Information</h3>
-        <div id="profile-error" class="alert alert-error hidden"></div>
+        <div id="profile-error" class="alert alert-error hidden" role="alert" aria-live="assertive"></div>
 
         <form id="profile-form" novalidate>
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:1rem;">
             <div class="form-group">
               <label class="form-label" for="prof-biz-name">Business / Brand Name <span class="required">*</span></label>
-              <input class="form-input" type="text" id="prof-biz-name" placeholder="e.g. Aura Handmade Crafts" required>
+              <input class="form-input" type="text" id="prof-biz-name" required>
             </div>
             <div class="form-group">
               <label class="form-label" for="prof-contact-name">Contact Person Name</label>
-              <input class="form-input" type="text" id="prof-contact-name" placeholder="e.g. Priya Sharma">
+              <input class="form-input" type="text" id="prof-contact-name">
             </div>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:1rem;">
             <div class="form-group">
               <label class="form-label" for="prof-upi">Official Business UPI ID <span class="required">*</span></label>
-              <input class="form-input mono" type="text" id="prof-upi" placeholder="e.g. auracrafts@oksbi" required>
+              <input class="form-input mono" type="text" id="prof-upi" required>
               <div class="form-hint">Used to cross-check payee UPI address on customer payment screenshots.</div>
             </div>
             <div class="form-group">
               <label class="form-label" for="prof-phone">Contact Phone / WhatsApp</label>
-              <input class="form-input" type="tel" id="prof-phone" placeholder="e.g. +91 98765 43210">
+              <input class="form-input" type="tel" id="prof-phone" autocomplete="tel">
             </div>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="prof-email">Public Contact Email</label>
-            <input class="form-input" type="email" id="prof-email" placeholder="e.g. support@auracrafts.in">
+            <input class="form-input" type="email" id="prof-email" autocomplete="email">
           </div>
 
           <div class="form-group">
             <label class="form-label" for="prof-address">Dispatch / Business Address</label>
-            <textarea class="form-input" id="prof-address" rows="2" placeholder="Your business city, state or address..."></textarea>
+            <textarea class="form-input" id="prof-address" rows="2"></textarea>
           </div>
 
           <div class="form-group">
             <label class="form-label" for="prof-notes">Store Policies / Instructions to Customers</label>
-            <textarea class="form-input" id="prof-notes" rows="2" placeholder="e.g. Dispatch within 48h after bank payment confirmation. Always verify your TC-XXXXXXXX referral code."></textarea>
+            <textarea class="form-input" id="prof-notes" rows="2"></textarea>
           </div>
 
           <button type="submit" class="btn btn-primary btn-lg" id="save-profile-btn">
