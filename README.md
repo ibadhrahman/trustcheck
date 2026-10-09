@@ -53,7 +53,7 @@ Key capabilities:
 │  3. Image Forensics  (SHA-256, pHash, ELA, EXIF)                    │
 │  4. HMAC-SHA256 Anti-Replay Deduplication Engine                    │
 │  5. Hash-Linked Append-Only Audit Ledger                            │
-│  6. SQLite  (12 tables, strict seller_id tenant isolation)          │
+│  6. PostgreSQL (Supabase cloud) / SQLite (local development)         │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -65,7 +65,7 @@ Key capabilities:
 
 - **Frontend:** Vanilla HTML5, CSS3, JavaScript — dark cybersecurity design system, served directly by FastAPI via Starlette `StaticFiles`
 - **Backend:** Python 3.10+, FastAPI, SQLAlchemy 2.0, Pydantic v2, Uvicorn
-- **Database:** SQLite with relational schema (12 tables), multi-tenant isolation enforced via `seller_id` on every query
+- **Database:** Supabase PostgreSQL in deployment, SQLite for local development and tests; multi-tenant isolation is enforced via `seller_id` on every query
 - **AI / Vision:**
   - DeepSeek V4.1 Flash (multimodal, via OpenAI-compatible API)
   - RapidOCR (ONNX runtime, pure-Python fallback)
@@ -104,7 +104,13 @@ cp .env.example .env
 # (Optional) Edit .env to add DEEPSEEK_API_KEY for AI vision
 # The app works without it using the built-in RapidOCR fallback
 
+# To use the linked Supabase project, set DATABASE_URL in .env to the
+# PostgreSQL URI from Supabase Dashboard → Project Settings → Database → Connect.
+# Use the Session pooler URI if your network does not support IPv6, and keep the
+# database password only in .env. The backend creates/updates its schema at startup.
+
 # 5. Seed demo data (creates test seller accounts and orders)
+# Run this only for a local/demo database; it writes into DATABASE_URL.
 python scripts/seed_demo.py
 
 # 6. Start the development server
@@ -112,6 +118,11 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Open **http://localhost:8000** in your browser.
+
+The app connects to Supabase through SQLAlchemy and psycopg when `DATABASE_URL`
+contains a PostgreSQL URI. Supabase tables are kept unavailable to the browser
+Data API; requests continue through the authenticated FastAPI backend. SQLite
+remains the default for local development and automated tests.
 
 **Demo login:**
 | Email | Password |
