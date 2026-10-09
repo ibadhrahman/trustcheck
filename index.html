@@ -12,15 +12,15 @@
         body { margin:0; color:var(--ink); background:var(--background); font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; line-height:1.6; }
         a { color:inherit; text-decoration:none; }
         .container { width:min(1120px,calc(100% - 40px)); margin:0 auto; }
-        header { position:sticky; top:0; z-index:10; background:rgba(248,250,255,.88); border-bottom:1px solid rgba(231,234,240,.75); backdrop-filter:blur(14px); }
+        header { position:sticky; top:0; z-index:10; background: linear-gradient(135deg, #C4B8D4 0%, #DDD8E8 50%, #C4B8D4 100%); background-size:300% 300%; animation:btn-gradient-flow 10s ease infinite; border-bottom:1px solid rgba(153,138,152,.35); backdrop-filter:blur(14px); }
         nav { min-height:76px; display:flex; align-items:center; justify-content:space-between; gap:24px; }
-        .brand { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.03em; }
+        .brand { display:flex; align-items:center; gap:10px; font-weight:800; letter-spacing:-.03em; color:#fff; }
         .brand-mark { display:grid; place-items:center; width:36px; height:36px; color:#fff; background:var(--primary); border-radius:11px; box-shadow:0 8px 18px rgba(55,93,251,.25); }
-        .nav-links { display:flex; align-items:center; gap:28px; color:var(--muted); font-size:.94rem; }
+        .nav-links { display:flex; align-items:center; gap:28px; color:#fff; font-size:.94rem; }
         .nav-links a:hover { color:var(--primary); }
         .nav-actions { display:flex; align-items:center; gap:14px; }
-        .login { color:var(--muted); font-weight:600; }
-        .button { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 18px; border:1px solid transparent; border-radius:10px; font-weight:700; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease, background .2s ease; }
+        .login { color:#fff; font-weight:600; }
+        .button { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:8px 16px; font-size:0.875rem; border:1px solid transparent; border-radius:10px; font-weight:700; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease, background .2s ease; }
         .button:hover { transform:translateY(-2px); }
         .button-primary { color:#fff; background:var(--primary); box-shadow:0 10px 20px rgba(55,93,251,.2); }
         .button-primary:hover { background:var(--primary-dark); }
@@ -41,33 +41,35 @@
         .token-card {
             width:100%;
             max-width:360px;
-            background:rgba(15, 20, 30, 0.6);
+            background: linear-gradient(135deg, #C4B8D4 0%, #DDD8E8 50%, #C4B8D4 100%);
+            background-size: 300% 300%;
+            animation: btn-gradient-flow 10s ease infinite;
             backdrop-filter:blur(20px);
             -webkit-backdrop-filter:blur(20px);
-            border:1px solid rgba(255, 255, 255, 0.08);
+            border:1px solid rgba(153,138,152,.35);
             border-radius:18px;
             padding:22px;
-            box-shadow:0 20px 50px rgba(0,0,0,0.4);
-            color:#fff;
+            box-shadow:0 16px 40px rgba(80,65,100,.18);
+            color:#292536;
             position:relative;
             transition:transform .3s ease, box-shadow .3s ease;
         }
         .token-card:hover {
             transform:translateY(-2px);
-            box-shadow:0 24px 60px rgba(0,0,0,0.46);
+            box-shadow:0 24px 60px rgba(80,65,100,.24);
         }
         .token-header {
             display:flex;
             align-items:center;
             justify-content:space-between;
             padding-bottom:14px;
-            border-bottom:1px solid rgba(255, 255, 255, 0.08);
+            border-bottom:1px solid rgba(80,65,100,.18);
         }
         .token-order-id {
             font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
             font-size:.82rem;
             font-weight:600;
-            color:rgba(255,255,255,0.85);
+            color:rgba(41,37,54,0.85);
             letter-spacing:.03em;
         }
         .token-auth-badge {
@@ -78,7 +80,7 @@
             font-weight:700;
             letter-spacing:.08em;
             text-transform:uppercase;
-            color:#34d399;
+            color:#168b72;
         }
         .token-pulse-dot {
             width:6px;
@@ -95,10 +97,10 @@
         }
         .token-item-row {
             padding:14px 0;
-            border-bottom:1px solid rgba(255, 255, 255, 0.08);
+            border-bottom:1px solid rgba(80,65,100,.14);
             font-weight:600;
             font-size:.92rem;
-            color:rgba(255,255,255,0.95);
+            color:rgba(41,37,54,0.95);
             letter-spacing:-.01em;
         }
         .token-metrics {
@@ -112,27 +114,27 @@
             align-items:center;
             padding:10px 0;
             font-size:.8rem;
-            border-bottom:1px solid rgba(255, 255, 255, 0.05);
+            border-bottom:1px solid rgba(80,65,100,.1);
         }
         .token-metric-row:last-child {
             border-bottom:none;
             padding-bottom:2px;
         }
         .token-metric-label {
-            color:rgba(255, 255, 255, 0.45);
+            color:rgba(41,37,54,0.55);
             font-weight:500;
             font-size:.8rem;
             letter-spacing:.01em;
         }
         .token-metric-val {
             font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
-            color:rgba(255, 255, 255, 0.88);
+            color:rgba(41,37,54,0.85);
             font-weight:600;
             font-size:.78rem;
             letter-spacing:.02em;
         }
-        .token-metric-val.matched { color:#34d399; }
-        .token-metric-val.verified { color:#a78bfa; }
+        .token-metric-val.matched { color:#168b72; }
+        .token-metric-val.verified { color:#5b3fa6; }
         .section { padding:84px 0; }
         .section-heading { max-width:650px; margin-bottom:36px; }
         .section-heading h2 { margin:10px 0 12px; font-size:clamp(2rem,4vw,3rem); line-height:1.1; letter-spacing:-.045em; }
@@ -322,8 +324,7 @@ body {
 }
 
 header {
-    background: rgba(234,231,240,.92);
-    border-color: var(--line);
+    border-color: rgba(153,138,152,.35);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
 }
