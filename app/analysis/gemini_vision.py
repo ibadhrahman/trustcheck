@@ -23,6 +23,22 @@ logger = logging.getLogger(__name__)
 # Structured Output Schema
 # ---------------------------------------------------------------------------
 
+class GeminiFieldConfidence(BaseModel):
+    """Fixed-key confidence schema supported by Gemini structured output."""
+
+    amount: Optional[str] = None
+    currency: Optional[str] = None
+    receiver_name: Optional[str] = None
+    receiver_upi_id: Optional[str] = None
+    transaction_id: Optional[str] = None
+    utr: Optional[str] = None
+    transaction_date: Optional[str] = None
+    transaction_time: Optional[str] = None
+    payment_app: Optional[str] = None
+    payment_status_text: Optional[str] = None
+    payment_perspective: Optional[str] = None
+
+
 class GeminiPaymentExtraction(BaseModel):
     """
     Strict structured output schema for multimodal payment screenshot analysis.
@@ -75,8 +91,8 @@ class GeminiPaymentExtraction(BaseModel):
         None,
         description="Exact raw text for amount as displayed on screen, e.g. '₹1,250.00' or '₹10'.",
     )
-    field_confidence: dict[str, str] = Field(
-        default_factory=dict,
+    field_confidence: GeminiFieldConfidence = Field(
+        default_factory=GeminiFieldConfidence,
         description="Confidence per extracted field: 'high', 'medium', 'low', or 'unknown'.",
     )
     uncertain_fields: list[str] = Field(
@@ -325,7 +341,8 @@ def gemini_extraction_to_fields_dict(ext: GeminiPaymentExtraction) -> dict:
 
     # Estimate overall confidence based on amount and tx ID confidence
     conf_map = {"high": 0.95, "medium": 0.75, "low": 0.4, "unknown": 0.3}
-    amount_conf = conf_map.get(ext.field_confidence.get("amount", "high"), 0.9)
+    field_confidence = ext.field_confidence.model_dump(exclude_none=True)
+    amount_conf = conf_map.get(field_confidence.get("amount", "high"), 0.9)
 
     return {
         "amount": ext.amount,
@@ -340,7 +357,7 @@ def gemini_extraction_to_fields_dict(ext: GeminiPaymentExtraction) -> dict:
         "status_text": ext.payment_status_text,
         "viewpoint": ext.payment_perspective or "unknown",
         "raw_amount_text": ext.raw_amount_text,
-        "field_confidence": ext.field_confidence,
+        "field_confidence": field_confidence,
         "uncertain_fields": ext.uncertain_fields,
         "warnings": ext.warnings,
         "ocr_confidence": amount_conf,

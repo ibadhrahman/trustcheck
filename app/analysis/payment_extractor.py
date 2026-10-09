@@ -54,11 +54,6 @@ async def extract_payment_screenshot_details_async(
     # 2. Optional Gemini fallback if enabled
     if getattr(settings, "gemini_enabled", False):
         try:
-            from app.analysis.gemini_vision import (
-                analyze_payment_screenshot_gemini_async,
-                gemini_extraction_to_fields_dict,
-                get_gemini_client,
-            )
             if get_gemini_client() is not None:
                 gemini_result = await analyze_payment_screenshot_gemini_async(
                     img_bytes=img_bytes,
