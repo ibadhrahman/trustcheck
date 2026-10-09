@@ -1,26 +1,70 @@
-# 🛡️ Trustcheck
+# TrustCheck
 
-**A verified order and anti-fraud platform for independent social media sellers (Instagram & WhatsApp).** 
+A verified order platform that protects small sellers and buyers on
+Instagram and WhatsApp from fake payment screenshots, stolen product
+photos and scam requests.
 
----
+Built for **OPCODE IMPACT 2026** (Track: Deepfake, Synthetic Media & Digital Trust).
 
-## 🚀 The Problem
-Social commerce is booming, but trust remains a massive hurdle. Independent sellers on platforms like Instagram and WhatsApp frequently fall victim to fake payment screenshots, while buyers fear being scammed by unverified products or malicious phishing links. There is currently no native layer of security for these transactions.
+## The problem
 
-## 💡 The Solution
-Trustcheck bridges the trust gap between buyers and sellers through an automated verification pipeline. We provide a decentralized layer of security for off-platform social media sales.
+Millions of small sellers in India sell through chat. Orders, photos and
+payments are informal, so fraudsters send edited payment screenshots,
+post copied or AI-generated product photos, and send fake UPI collect
+requests. Existing AI-detection tools only answer "is this image fake?"
+and do not fit into a chat-based sale.
 
-### Core Features
-* **🧾 Automated Payment Verification:** Extracts data from payment screenshots and cross-references it against the known order details to instantly detect forged or reused transaction receipts.
-* **📸 Cryptographic Product Certification:** Generates **SHA-256 fingerprints** for product photos. This guarantees image authenticity, preventing "bait-and-switch" tactics and proving the seller possesses the actual item.
-* **🚨 Scam & Phishing Detection Engine:** Actively parses chat text to flag malicious messages, suspicious links, and fraudulent UPI payment requests to protect both parties.
+## How it works
 
-## 🛠️ Tech Stack
-* **Language:** Python
-* **Backend Framework:** FastAPI
-* **Cryptography:** SHA-256 Hashing..
+1. The seller registers a shop, uploads product photos (fingerprinted with
+   SHA-256 and certified as original) and creates an order link with the
+   product, price and UPI ID.
+2. The seller shares the link in the WhatsApp or Instagram chat.
+3. The buyer opens the link, sees the verified listing, pays in their own
+   UPI app (TrustCheck never handles money), and uploads the payment
+   screenshot on the order page.
+4. Because the order is known, the backend compares the screenshot against
+   the expected amount, payee, date and transaction ID using OCR, and runs
+   image-forensics checks for editing traces.
+5. The seller gets an explainable verdict and a reminder to confirm the
+   credit in their bank app before shipping.
 
-## ⚙️ How it Works
-1. **Order Initiation:** The seller registers the order details via Trustcheck and generates a secure link for the buyer.
-2. **Photo Certification:** The seller uploads the product photo, locking it with a SHA-256 hash that the buyer can verify.
-3. **Payment & Security:** The buyer uploads their payment screenshot. Trustcheck validates the receipt and scans all accompanying communication for scam triggers before clearing the order.
+## Features
+
+- Verified seller shop and tamper-proof photo certificates (SHA-256 +
+  hash-chained ledger)
+- Shareable order links for WhatsApp and Instagram
+- Payment screenshot check against the known order (OCR + edit detection)
+- Scam check for messages, links and UPI requests, with plain-language reasons
+- Seller confirmation checklist and scam intelligence dashboard
+
+## Tech stack
+
+Python, FastAPI, SQLite, Tesseract OCR, Pillow, OpenCV, exifread,
+HTML/CSS/JavaScript, QR code generation.
+
+## Project status
+
+Hackathon prototype. The image checks, SHA-256 certificates and ledger
+work in the browser demo. The backend, order flow and OCR comparison are
+in development.
+
+## Limitations
+
+- Scores are risk estimates, not proof. A clean or well-made fake can pass.
+- A screenshot is never final proof of payment. Sellers must confirm the
+  credit in their bank app.
+- TrustCheck protects users who opt in. A scammer will not use the platform.
+
+## Roadmap
+
+Pretrained AI-image detection models, WhatsApp bot integration, regional
+language support, and an API for marketplaces.
+
+## Team
+
+<Add team name and member names here>
+
+## License
+
+MIT
