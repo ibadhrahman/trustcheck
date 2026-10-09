@@ -7,7 +7,7 @@ This file contains project state for a future assistant. It intentionally contai
 - Stage 0 setup and Stage 1 foundation are complete and merged into `main`. Stage 0 was PR #1; Stage 1 was PR #2. The handoff files were also merged into `main` at `d3c85dd`.
 - Stage 2 registration, login, JWT creation, and the authentication dependency are implemented in `app/auth.py` and wired into `app/main.py`.
 - Next coding stage: Stage 3, certificate photo upload, hash chain, certificate lookup/verification, and ledger status.
-- Stage 2 code is complete but has not been runtime-tested in this turn. Its source and this progress update are currently uncommitted on the Stage 2 branch.
+- Stage 2 code is committed and pushed, but has not been runtime-tested in this turn. Its PR still needs to be opened and reviewed.
 - The current worktree is on `backend-a/stage-2-auth`, based on the pulled `main` at `d3c85dd`.
 
 ## 2. Decisions made
@@ -24,7 +24,7 @@ This file contains project state for a future assistant. It intentionally contai
 
 ## 3. Files Backend A owns and what each does
 
-- `app/main.py` — creates the FastAPI app, configures CORS and static serving, initializes the database, and provides `GET /api/health`.
+- `app/main.py` — creates the FastAPI app, configures CORS and static serving, initializes the database, includes the auth router, normalizes API errors, and provides `GET /api/health`.
 - `app/db.py` — defines the SQLite tables and indexes and provides `get_connection()` and `init_db()`.
 - `app/auth.py` — implements `POST /api/auth/register`, `POST /api/auth/login`, bcrypt password hashing, JWT creation, and `get_current_seller()`.
 - `app/ledger.py` — planned certificate photo upload, SHA-256 hash chain, certificate lookup/verification, and ledger status; not created yet.
@@ -106,14 +106,17 @@ python -m uvicorn app.main:app --reload
 
 ## 8. Git state
 
-- Current branch: `backend-a/stage-2-auth`, created from the pulled `main` at `d3c85dd`.
-- Stage 2 commit and push are pending; `app/auth.py`, `app/main.py`, and this progress update are the current stage changes.
+- Current branch: `backend-a/stage-2-auth`, tracking the pushed branch on `origin`, created from `main` at `d3c85dd`.
+- Current last commit message: `Backend A: update Stage 2 handoff Git state`.
+- Stage 2 source commit `9c575d4` (`Backend A: stage 2 - register, login, JWT`) is pushed to `origin`.
 - Pushed and merged: Stage 0 PR #1 and Stage 1 PR #2. Their implementation commits were `8e88a4d` and `ddd9593` respectively.
 - `AGENTS.md` and `BACKEND_A_PROGRESS.md` are merged into `main` at `d3c85dd`.
 - Pulled `main` since the last stage: yes. `git checkout main` and `git pull origin main` completed before creating the Stage 2 branch. `requirements.txt` was unchanged.
+- Stage 2 PR is not open. The GitHub integration returned HTTP 403 (`Resource not accessible by integration`); open this branch's PR after signing in: `https://github.com/ibadhrahman/trustcheck/pull/new/backend-a/stage-2-auth`.
+- No uncommitted or unpushed changes remain after the final handoff-state push.
 
 ## 9. Next steps
 
-1. Finish the Stage 2 local registration/login checks, then review and merge its PR after a teammate says OK.
+1. Run the Stage 2 local registration/login checks and open the PR at `https://github.com/ibadhrahman/trustcheck/pull/new/backend-a/stage-2-auth`; merge after a teammate says OK.
 2. Before Stage 3, run `git checkout main` and `git pull origin main`. If `requirements.txt` changed, run `pip install -r requirements.txt` and `python check_setup.py` again.
 3. Create `backend-a/stage-3-ledger` from the updated `main`; implement photo upload, SHA-256 hashing, the certificate hash chain, certificate lookup/verification, and `/api/ledger/status`.
