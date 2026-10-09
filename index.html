@@ -25,27 +25,114 @@
         .button-primary { color:#fff; background:var(--primary); box-shadow:0 10px 20px rgba(55,93,251,.2); }
         .button-primary:hover { background:var(--primary-dark); }
         .button-secondary { color:var(--ink); background:#fff; border-color:var(--line); }
-        .hero { padding:16px 0 72px; overflow:hidden; }
-        .hero-grid { display:grid; grid-template-columns:1.05fr .95fr; align-items:center; gap:70px; }
-        .eyebrow { display:inline-flex; align-items:center; gap:8px; padding:7px 11px; color:#168b72; background:var(--mint); border-radius:999px; font-size:.82rem; font-weight:800; }
-        h1 { max-width:670px; margin:20px 0; font-size:clamp(2.8rem,6vw,5.1rem); line-height:1.02; letter-spacing:-.065em; }
-        .hero-copy { max-width:590px; color:var(--muted); font-size:1.15rem; }
-        .hero-buttons { display:flex; flex-wrap:wrap; gap:12px; margin-top:30px; }
-        .trust-note { display:flex; align-items:center; gap:9px; margin-top:24px; color:var(--muted); font-size:.88rem; }
+        .hero { padding:8px 0 46px; overflow:hidden; }
+        .hero-grid { display:grid; grid-template-columns:1.15fr 0.85fr; align-items:center; gap:52px; }
+        .eyebrow { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; color:#168b72; background:var(--mint); border-radius:999px; font-size:.8rem; font-weight:700; letter-spacing:.02em; }
+        h1 { max-width:620px; margin:14px 0 16px; font-size:clamp(2.1rem,3.6vw,3.1rem); line-height:1.14; letter-spacing:-.04em; font-weight:800; color:var(--ink); }
+        .hero-copy { max-width:540px; color:var(--muted); font-size:1.05rem; line-height:1.55; margin:0 0 24px; letter-spacing:-.01em; }
+        .hero-buttons { display:flex; align-items:center; flex-wrap:wrap; gap:18px; margin-top:20px; }
+        .hero-link { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-weight:600; font-size:.95rem; text-decoration:none; transition:color .2s ease, transform .2s ease; }
+        .hero-link:hover { color:var(--ink); transform:translateX(3px); }
+        .trust-note { display:flex; align-items:center; gap:8px; margin-top:20px; color:var(--muted); font-size:.84rem; }
         .trust-note strong { color:var(--ink); }
-        .hero-card { position:relative; padding:22px; background:#fff; border:1px solid var(--line); border-radius:22px; box-shadow:var(--shadow); }
-        .card-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
-        .card-title { font-weight:800; }
-        .status { padding:5px 9px; color:#168b72; background:var(--mint); border-radius:7px; font-size:.75rem; font-weight:800; }
-        .order-box { padding:18px; background:#f7f8fc; border-radius:14px; }
-        .product-row { display:flex; align-items:center; gap:13px; padding-bottom:17px; border-bottom:1px solid var(--line); }
-        .product-icon { display:grid; place-items:center; width:48px; height:48px; color:var(--primary); background:#e9edff; border-radius:12px; font-size:1.4rem; }
-        .product-row small,.metric small { color:var(--muted); }
-        .amount { margin-left:auto; font-weight:800; }
-        .metrics { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-top:16px; }
-        .metric { padding:14px; background:#fff; border:1px solid var(--line); border-radius:11px; }
-        .metric strong { display:block; font-size:1.1rem; }
-        .verified { display:flex; align-items:center; gap:9px; margin-top:17px; color:#168b72; font-size:.9rem; font-weight:700; }
+
+        /* ── Floating Verified Token Card (FinTech Micro-Receipt) ── */
+        .token-card-wrapper { display:flex; justify-content:flex-end; width:100%; }
+        .token-card {
+            width:100%;
+            max-width:360px;
+            background:rgba(15, 20, 30, 0.6);
+            backdrop-filter:blur(20px);
+            -webkit-backdrop-filter:blur(20px);
+            border:1px solid rgba(255, 255, 255, 0.08);
+            border-radius:18px;
+            padding:22px;
+            box-shadow:0 20px 50px rgba(0,0,0,0.4);
+            color:#fff;
+            position:relative;
+            transition:transform .3s ease, box-shadow .3s ease;
+        }
+        .token-card:hover {
+            transform:translateY(-2px);
+            box-shadow:0 24px 60px rgba(0,0,0,0.46);
+        }
+        .token-header {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding-bottom:14px;
+            border-bottom:1px solid rgba(255, 255, 255, 0.08);
+        }
+        .token-order-id {
+            font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+            font-size:.82rem;
+            font-weight:600;
+            color:rgba(255,255,255,0.85);
+            letter-spacing:.03em;
+        }
+        .token-auth-badge {
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            font-size:.68rem;
+            font-weight:700;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+            color:#34d399;
+        }
+        .token-pulse-dot {
+            width:6px;
+            height:6px;
+            border-radius:50%;
+            background:#34d399;
+            box-shadow:0 0 0 0 rgba(52,211,153,.5);
+            animation:token-ping 2s ease infinite;
+        }
+        @keyframes token-ping {
+            0% { box-shadow:0 0 0 0 rgba(52,211,153,.45); }
+            70% { box-shadow:0 0 0 5px rgba(52,211,153,0); }
+            100% { box-shadow:0 0 0 0 rgba(52,211,153,0); }
+        }
+        .token-item-row {
+            padding:14px 0;
+            border-bottom:1px solid rgba(255, 255, 255, 0.08);
+            font-weight:600;
+            font-size:.92rem;
+            color:rgba(255,255,255,0.95);
+            letter-spacing:-.01em;
+        }
+        .token-metrics {
+            display:flex;
+            flex-direction:column;
+            padding-top:4px;
+        }
+        .token-metric-row {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            padding:10px 0;
+            font-size:.8rem;
+            border-bottom:1px solid rgba(255, 255, 255, 0.05);
+        }
+        .token-metric-row:last-child {
+            border-bottom:none;
+            padding-bottom:2px;
+        }
+        .token-metric-label {
+            color:rgba(255, 255, 255, 0.45);
+            font-weight:500;
+            font-size:.8rem;
+            letter-spacing:.01em;
+        }
+        .token-metric-val {
+            font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+            color:rgba(255, 255, 255, 0.88);
+            font-weight:600;
+            font-size:.78rem;
+            letter-spacing:.02em;
+        }
+        .token-metric-val.matched { color:#34d399; }
+        .token-metric-val.verified { color:#a78bfa; }
         .section { padding:84px 0; }
         .section-heading { max-width:650px; margin-bottom:36px; }
         .section-heading h2 { margin:10px 0 12px; font-size:clamp(2rem,4vw,3rem); line-height:1.1; letter-spacing:-.045em; }
@@ -179,6 +266,8 @@
             .hero{padding-top:12px;}
             .hero-grid,.features{grid-template-columns:1fr;}
             .hero-grid{gap:42px;}
+            .token-card-wrapper{justify-content:center;}
+            .token-card{max-width:400px;}
             .steps{grid-template-columns:repeat(2,1fr);}
             .contact-strip{flex-direction:column;align-items:flex-start;gap:20px;padding:24px 22px;}
             .cs-divider{width:100%;height:1px;align-self:auto;}
@@ -187,6 +276,8 @@
             .container{width:min(100% - 28px,1120px);}
             .nav-actions .login{display:none;}
             .hero-buttons,.hero-buttons .button{width:100%;}
+            .hero-link{width:100%;justify-content:center;}
+            .token-card{max-width:100%;}
             .steps{grid-template-columns:1fr;}
             .cs-actions{flex-direction:column;width:100%;}
             .cs-action{width:100%;justify-content:flex-start;}
@@ -303,7 +394,6 @@ header {
 }
 
 /* ── Cards, features, steps ── */
-.hero-card,
 .feature,
 .step {
     background: var(--surface);
@@ -404,7 +494,52 @@ button:focus-visible {
         </nav>
     </header>
     <main id="top">
-        <section class="hero"><div class="container hero-grid"><div><div class="eyebrow">Built for chat-based commerce</div><h1>Your Transaction. Our Verification. Zero Cost.</h1><p class="hero-copy">Verify order details, payment screenshots, product photos, and scam warnings before you pay. TrustCheck makes every WhatsApp or Instagram order easier to confirm.</p><div class="hero-buttons"><a class="button button-primary" href="#signup">Verify now</a><a class="button button-secondary" href="#how-it-works">See how it works</a></div><div class="trust-note"><span>✓</span> Trusted by <strong>2,300+</strong> small sellers and buyers</div></div><div class="hero-card"><div class="card-top"><div class="card-title">Order check</div><span class="status">Verified</span></div><div class="order-box"><div class="product-row"><div class="product-icon">🛍️</div><div><strong>Custom T-shirt</strong><small>Instagram seller</small></div><div class="amount">RM 120</div></div><div class="metrics"><div class="metric"><small>Payment proof</small><strong>Matched</strong></div><div class="metric"><small>Product photo</small><strong>Confirmed</strong></div><div class="metric"><small>Seller profile</small><strong>Legit</strong></div><div class="metric"><small>Risk scan</small><strong>Low</strong></div></div><div class="verified">✓ Verified details and safe to proceed</div></div></div></div></section>
+        <section class="hero">
+            <div class="container hero-grid">
+                <div>
+                    <div class="eyebrow">Built with Trust</div>
+                    <h1>Your Transaction. Our Verification. Zero Cost.</h1>
+                    <p class="hero-copy">Cryptographic payment and image authentication built directly for chat-based buyers and sellers.</p>
+                    <div class="hero-buttons">
+                        <a class="button button-primary" href="#signup">Verify now</a>
+                        <a class="hero-link" href="#how-it-works">Explore workflow →</a>
+                    </div>
+                    <div class="trust-note"><span>✓</span> Trusted by <strong>2,300+</strong> small sellers and buyers</div>
+                </div>
+                <div class="token-card-wrapper">
+                    <div class="token-card">
+                        <div class="token-header">
+                            <span class="token-order-id">Order #2841</span>
+                            <span class="token-auth-badge">
+                                <span class="token-pulse-dot" aria-hidden="true"></span>
+                                AUTHENTICATED
+                            </span>
+                        </div>
+                        <div class="token-item-row">
+                            <span>Custom T-Shirt • RM 120</span>
+                        </div>
+                        <div class="token-metrics">
+                            <div class="token-metric-row">
+                                <span class="token-metric-label">Payment Hash</span>
+                                <span class="token-metric-val matched">Matched (UTXO/UTR)</span>
+                            </div>
+                            <div class="token-metric-row">
+                                <span class="token-metric-label">Image Integrity</span>
+                                <span class="token-metric-val verified">SHA-256 Verified</span>
+                            </div>
+                            <div class="token-metric-row">
+                                <span class="token-metric-label">Phishing Scan</span>
+                                <span class="token-metric-val">0 Flags</span>
+                            </div>
+                            <div class="token-metric-row">
+                                <span class="token-metric-label">Risk Score</span>
+                                <span class="token-metric-val matched">0.02 (Safe)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
         <section class="section" id="features"><div class="container"><div class="section-heading"><div class="eyebrow">One safer order flow</div><h2>Simple checks for the risks that matter.</h2><p>TrustCheck helps sellers and buyers confirm details before money changes hands.</p></div><div class="features"><div class="feature"><div class="feature-icon">📸</div><h3>Payment screenshot check</h3><p>Review proof of payment before shipping anything out.</p></div><div class="feature"><div class="feature-icon">🧾</div><h3>Order detail validation</h3><p>Match product name, quantity, price, and chat details in one place.</p></div><div class="feature"><div class="feature-icon">🛡️</div><h3>Scam risk alert</h3><p>Flag suspicious request patterns and high-risk seller behavior early.</p></div></div></div></section>
         <section class="section" id="how-it-works"><div class="container"><div class="section-heading"><div class="eyebrow">How it works</div><h2>From chat to confirmed order.</h2></div><div class="steps"><div class="step"><div class="step-number">1</div><h3>Send details</h3><p>Upload the payment screenshot, chat, and product photo.</p></div><div class="step"><div class="step-number">2</div><h3>Check carefully</h3><p>Review the order against the real evidence provided.</p></div><div class="step"><div class="step-number">3</div><h3>Verify status</h3><p>See whether the order is safe, unclear, or risky.</p></div><div class="step"><div class="step-number">4</div><h3>Proceed with confidence</h3><p>Make the decision with a clearer, safer process.</p></div></div></div></section>
         <section class="contact-section" id="safety"><div class="container">
