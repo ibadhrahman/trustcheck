@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     deepseek_base_url: str = "https://api.deepseek.com"
     deepseek_model: str = "deepseek-v4.1-flash"
     deepseek_enabled: bool = True
-    deepseek_timeout_seconds: int = 15
+    deepseek_timeout_seconds: int = 30
     deepseek_max_retries: int = 0
 
     # Gemini Multimodal AI (Optional)
