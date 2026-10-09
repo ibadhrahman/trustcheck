@@ -7,8 +7,8 @@ This file contains project state for a future assistant. It intentionally contai
 - Stage 0 setup and Stage 1 foundation are complete and merged into `main`. Stage 0 was PR #1; Stage 1 was PR #2.
 - Stage 1 provides the FastAPI shell, SQLite schema, static frontend mount, CORS, hidden helper health route, and temporary analysis stubs.
 - Next coding stage: Stage 2, seller registration, login, JWT, and the authentication dependency.
-- No coding stage is half-finished. This handoff update (`AGENTS.md` and `BACKEND_A_PROGRESS.md`) is currently uncommitted.
-- The current worktree is on `main` at merge commit `daabddf`; it matches `origin/main`.
+- No coding stage is half-finished. The handoff files are committed and pushed on `backend-a/stage-1-handoff`; the handoff PR has not been opened.
+- The current worktree is on `backend-a/stage-1-handoff`, based on `main` at merge commit `daabddf`.
 
 ## 2. Decisions made
 
@@ -100,12 +100,12 @@ python -m uvicorn app.main:app --reload
 
 ## 8. Git state
 
-- Current branch: `main`, matching `origin/main`.
-- Current last commit: `daabddf` — `Merge pull request #2 from ibadhrahman/backend-a/stage-1-foundation`.
+- Current branch: `backend-a/stage-1-handoff`, tracking the pushed branch on `origin`.
+- Current last commit message: `Backend A: update pushed handoff Git state`.
 - Pushed and merged: Stage 0 PR #1 and Stage 1 PR #2. Their implementation commits were `8e88a4d` and `ddd9593` respectively.
-- Pulled `main` since the last stage: no pull was run during this handoff update. At inspection time, local `main` already matched `origin/main` at `daabddf`; whether Backend A ran a pull command after the last stage cannot be verified from the worktree.
-- Not yet pushed: this `AGENTS.md` and `BACKEND_A_PROGRESS.md` update.
-- The only untracked files at the last status check were `AGENTS.md` and `BACKEND_A_PROGRESS.md`.
+- The handoff branch, including `AGENTS.md` and `BACKEND_A_PROGRESS.md`, is pushed to `origin`. The handoff PR has not been opened yet.
+- Pulled `main` since the last stage: yes. `git pull --rebase origin main` completed before pushing; `origin/main` was at `daabddf` and the branch was up to date.
+- No uncommitted or unpushed handoff changes remain after the final push.
 
 ## 9. Next steps
 
