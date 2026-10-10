@@ -2,16 +2,25 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify Payment — TrustCheck</title>
+  <title>Verify Payment Screenshot — TrustCheck</title>
   <meta name="description" content="Analyze payment screenshots, compare receipt details with an order, and review duplicate and UTR risk signals.">
   <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="shortcut icon" href="/favicon.ico">
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
 <div class="sidebar-overlay" id="sidebar-overlay"></div>
 <div class="app-shell">
   <aside class="sidebar" id="sidebar">
-    <div class="sidebar-logo"><div class="logo-icon">TC</div><div><div class="logo-text">TrustCheck</div><div class="logo-tagline">Digital Trust Platform</div></div></div>
+    <a href="/dashboard.html" class="brand-home-link" aria-label="TrustCheck dashboard" style="text-decoration:none;color:inherit;">
+      <div class="sidebar-logo">
+        <img src="/logo.png" alt="TrustCheck" style="width:36px;height:36px;object-fit:contain;border-radius:8px;">
+        <div>
+          <div class="logo-text">TrustCheck</div>
+          <div class="logo-tagline">Digital Trust Platform</div>
+        </div>
+      </div>
+    </a>
     <nav class="sidebar-nav">
       <span class="nav-section-label">Main</span>
       <a class="nav-item" data-page="dashboard" href="/dashboard.html"><span class="nav-icon">📊</span>Dashboard</a>
@@ -27,7 +36,13 @@
   </aside>
 
   <main class="main-content">
-    <div class="mobile-nav-bar"><button class="mobile-menu-btn" id="mobile-menu-btn">☰</button><div class="logo-text">TrustCheck</div></div>
+    <div class="mobile-nav-bar">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle navigation menu">☰</button>
+      <a href="/dashboard.html" class="brand-home-link mobile-brand-home-link" aria-label="TrustCheck dashboard" style="display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit;">
+        <img src="/logo.png" alt="TrustCheck" style="width:28px;height:28px;object-fit:contain;border-radius:6px;">
+        <div class="logo-text">TrustCheck</div>
+      </a>
+    </div>
 
     <div class="page-header">
       <h1 class="page-title">🔍 Verify Payment</h1>
@@ -53,7 +68,7 @@
 
           <div class="form-group" id="order-id-group">
             <label class="form-label">Order ID or Buyer Verification ID <span class="required">*</span></label>
-            <input class="form-input mono" type="text" id="verify-order-id" required>
+            <input class="form-input mono" type="text" id="verify-order-id" placeholder="e.g. TXN-PCFY-4A5K or Order UUID" required>
             <div class="form-hint">Paste the buyer’s TXN verification ID to view saved analysis, or enter an Order ID for a new screenshot check.</div>
           </div>
 

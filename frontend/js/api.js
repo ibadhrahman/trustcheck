@@ -324,19 +324,26 @@ function initSharedPageChrome() {
     const footer = document.createElement('footer');
     footer.className = 'app-contact-footer';
     footer.innerHTML = `
-      <span>© <span data-current-year>${new Date().getFullYear()}</span> TrustCheck</span>
-      <a href="mailto:trustcheck@gmail.com">Email support: trustcheck@gmail.com</a>`;
+      <span>© <span data-current-year>${new Date().getFullYear()}</span> TrustCheck · Built for safer social commerce.</span>
+      <a href="mailto:trustcheck@gmail.com">✉️ Email support: trustcheck@gmail.com</a>
+      <a href="tel:+919876543210">📞 Helpline: +91 98765 43210</a>`;
     document.body.appendChild(footer);
   }
 
   const footer = document.querySelector('.app-contact-footer');
+  if (footer && !footer.querySelector('a[href^="tel:"]')) {
+    const defaultHelpline = document.createElement('a');
+    defaultHelpline.href = 'tel:+919876543210';
+    defaultHelpline.textContent = '📞 Helpline: +91 98765 43210';
+    footer.appendChild(defaultHelpline);
+  }
   const profile = getCurrentUser()?.profile || {};
   const phone = String(profile.contact_phone || profile.phone || '').trim();
   const telValue = phone.replace(/[^\d+]/g, '');
   if (footer && phone && /^\+?\d{7,15}$/.test(telValue) && !footer.querySelector('[data-seller-phone]')) {
     const phoneLink = document.createElement('a');
     phoneLink.href = `tel:${telValue}`;
-    phoneLink.textContent = `Call ${phone}`;
+    phoneLink.textContent = `Seller WhatsApp/Call: ${phone}`;
     phoneLink.dataset.sellerPhone = 'true';
     footer.appendChild(phoneLink);
   }
