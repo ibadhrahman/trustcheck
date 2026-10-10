@@ -273,11 +273,32 @@
         <a href="#limitations" style="font-weight:600;font-size:0.92rem;color:#111827;">Limitations</a>
         <a href="#contact" style="font-weight:600;font-size:0.92rem;color:#111827;">Contact</a>
       </div>
-      <div style="display:flex;gap:0.75rem;align-items:center;">
+      <div class="nav-cta" style="display:flex;gap:0.75rem;align-items:center;">
         <button type="button" class="button button-primary btn-get-started" style="font-size:0.85rem;cursor:pointer;">Get started</button>
       </div>
+      <button type="button" class="landing-menu-toggle" id="landing-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false" aria-controls="landing-mobile-menu">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
     </nav>
+    <div class="landing-mobile-menu" id="landing-mobile-menu" aria-hidden="true">
+      <div class="mobile-menu-links">
+        <a href="#features" class="mobile-menu-link">Features</a>
+        <a href="#how-it-works" class="mobile-menu-link">How it works</a>
+        <a href="#limitations" class="mobile-menu-link">Limitations</a>
+        <a href="#contact" class="mobile-menu-link">Contact</a>
+      </div>
+      <div class="mobile-menu-divider"></div>
+      <div class="mobile-menu-actions">
+        <a href="/buyer.html" class="button button-secondary w-full" style="justify-content:center;">Buyer order updates</a>
+        <a href="/verify.html" class="button button-secondary w-full" style="justify-content:center;">Payment verification</a>
+        <a href="/login.html" class="button button-secondary w-full" style="justify-content:center;">Merchant sign in</a>
+        <button type="button" class="button button-primary w-full btn-get-started" style="justify-content:center;font-size:0.95rem;cursor:pointer;">Get started</button>
+      </div>
+    </div>
   </header>
+  <div class="landing-menu-backdrop" id="landing-menu-backdrop"></div>
 
   <!-- Hero -->
   <section class="hero-section" id="home">
@@ -654,5 +675,63 @@
   </script>
 </div>
 <script>document.querySelectorAll('[data-current-year]').forEach((el) => { el.textContent = new Date().getFullYear(); });</script>
+<script>
+  (function () {
+    const toggleBtn = document.getElementById('landing-menu-toggle');
+    const mobileMenu = document.getElementById('landing-mobile-menu');
+    const backdrop = document.getElementById('landing-menu-backdrop');
+
+    if (!toggleBtn || !mobileMenu) return;
+
+    function openMenu() {
+      toggleBtn.classList.add('is-active');
+      toggleBtn.setAttribute('aria-expanded', 'true');
+      mobileMenu.classList.add('is-open');
+      mobileMenu.setAttribute('aria-hidden', 'false');
+      if (backdrop) backdrop.classList.add('is-open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeMenu() {
+      toggleBtn.classList.remove('is-active');
+      toggleBtn.setAttribute('aria-expanded', 'false');
+      mobileMenu.classList.remove('is-open');
+      mobileMenu.setAttribute('aria-hidden', 'true');
+      if (backdrop) backdrop.classList.remove('is-open');
+      document.body.style.overflow = '';
+    }
+
+    toggleBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (mobileMenu.classList.contains('is-open')) {
+        closeMenu();
+      } else {
+        openMenu();
+      }
+    });
+
+    if (backdrop) {
+      backdrop.addEventListener('click', closeMenu);
+    }
+
+    mobileMenu.querySelectorAll('a, button').forEach((item) => {
+      item.addEventListener('click', () => {
+        closeMenu();
+      });
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mobileMenu.classList.contains('is-open')) {
+        closeMenu();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768 && mobileMenu.classList.contains('is-open')) {
+        closeMenu();
+      }
+    });
+  })();
+</script>
 </body>
 </html>
