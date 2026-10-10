@@ -3,6 +3,7 @@ TrustCheck FastAPI application entry point.
 """
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
@@ -17,6 +18,7 @@ from app.routers import (
     auth_router,
     dashboard_router,
     orders_router,
+    outcomes_router,
     payments_router,
     products_router,
     seller_router,
@@ -29,6 +31,28 @@ logger = logging.getLogger("trustcheck")
 # App
 # ---------------------------------------------------------------------------
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Initialising database …")
+    init_db()
+    logger.info("TrustCheck is ready.")
+
+    # Warn about OCR availability
+    from app.analysis.ocr_check import get_ocr_availability
+    avail = get_ocr_availability()
+    if not avail["tesseract"] and not avail["rapidocr"]:
+        logger.warning(
+            "No OCR engine found. "
+            "Payment screenshot analysis will be unavailable. "
+            "Install Tesseract: https://github.com/tesseract-ocr/tesseract "
+            "or run: pip install rapidocr-onnxruntime"
+        )
+    else:
+        active = [k for k, v in avail.items() if v and k in ("tesseract", "rapidocr")]
+        logger.info("OCR engines available: %s", active)
+    yield
+
+
 app = FastAPI(
     title="TrustCheck API",
     description=(
@@ -38,6 +62,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/api/docs",
     redoc_url="/api/redoc",
+    lifespan=lifespan,
 )
 
 # CORS
@@ -57,6 +82,7 @@ app.include_router(auth_router.router)
 app.include_router(seller_router.router)
 app.include_router(products_router.router)
 app.include_router(orders_router.router)
+app.include_router(outcomes_router.router)
 app.include_router(payments_router.router)
 app.include_router(dashboard_router.router)
 
@@ -92,27 +118,5 @@ if _FRONTEND_DIR.exists():
 
 
 # ---------------------------------------------------------------------------
-# Startup
-# ---------------------------------------------------------------------------
-
-@app.on_event("startup")
-async def startup():
-    logger.info("Initialising database …")
-    init_db()
-    logger.info("TrustCheck is ready.")
-
-    # Warn about OCR availability
-    from app.analysis.ocr_check import get_ocr_availability
-    avail = get_ocr_availability()
-    if not avail["tesseract"] and not avail["rapidocr"]:
-        logger.warning(
-            "No OCR engine found. "
-            "Payment screenshot analysis will be unavailable. "
-            "Install Tesseract: https://github.com/tesseract-ocr/tesseract "
-            "or run: pip install rapidocr-onnxruntime"
-        )
-    else:
-        active = [k for k, v in avail.items() if v and k in ("tesseract", "rapidocr")]
-        logger.info("OCR engines available: %s", active)
 
 

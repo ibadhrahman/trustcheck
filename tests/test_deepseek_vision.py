@@ -196,8 +196,9 @@ async def test_fallback_to_local_ocr_when_deepseek_fails(monkeypatch):
         assert result.get("engine_used") == "local_ocr"
 
 
-def test_api_cross_verify_with_deepseek(client, auth_headers, test_user, db_session):
+def test_api_cross_verify_with_deepseek(client, auth_headers, test_user, db_session, monkeypatch):
     """End-to-end integration test of /api/payments/cross-verify with DeepSeek."""
+    monkeypatch.setattr(settings, "deepseek_enabled", True)
     order = Order(
         seller_id=test_user.id,
         expected_amount=10.00,
@@ -228,8 +229,9 @@ def test_api_cross_verify_with_deepseek(client, auth_headers, test_user, db_sess
     )
 
     with patch("app.analysis.payment_extractor.get_deepseek_async_client") as mock_get_client, \
-         patch("app.analysis.payment_extractor.analyze_payment_screenshot_deepseek_async", return_value=mock_extracted):
+         patch("app.analysis.payment_extractor.analyze_payment_screenshot_deepseek_async", new_callable=AsyncMock) as mock_analyze:
         mock_get_client.return_value = MagicMock()
+        mock_analyze.return_value = mock_extracted
 
         img_bytes = _make_dummy_image()
         response = client.post(

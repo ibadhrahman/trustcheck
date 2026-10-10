@@ -17,6 +17,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
       margin-bottom: 2rem;
       padding: 1rem 1.25rem;
       background: #FFFFFF;
@@ -37,8 +39,9 @@
         <div class="logo-tagline">Buyer Payment Submission</div>
       </div>
     </a>
-    <div>
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:.4rem;flex-wrap:wrap;">
       <a href="/login.html" class="button button-secondary" style="font-size:0.84rem;">Are you a Seller? Sign In</a>
+      <a href="/buyer.html" class="button button-secondary" style="font-size:0.84rem;">Order Updates</a>
     </div>
   </header>
 
@@ -65,6 +68,7 @@
         <label class="form-label">Seller Code or Order Referral Code <span class="required">*</span></label>
         <input class="form-input mono" type="text" id="verify-code" style="font-size:1.1rem;letter-spacing:0.05em;" required>
         <div class="form-hint">Enter either your seller's master code from their bio or the specific order code they sent you.</div>
+        <div id="seller-issue-warning" class="alert alert-warning hidden" role="status" style="margin-top:.65rem;"></div>
       </div>
 
       <div class="form-group">
@@ -101,8 +105,9 @@
             Share this ID with your seller so they can find your submission.
           </p>
         </div>
-        <div style="display:flex; gap:0.6rem; flex-wrap:wrap;">
+        <div style="display:flex; gap:0.6rem; flex-wrap:wrap; align-items:center;">
           <button type="button" class="btn btn-secondary btn-sm" id="btn-copy-txid">📋 Copy ID</button>
+          <a class="btn btn-secondary btn-sm" id="btn-track-order" href="/buyer.html">📦 Track Order</a>
           <button type="button" class="btn btn-primary btn-sm" id="btn-share-whatsapp" style="background:#25D366; border-color:#25D366; color:#fff;">
             💬 Share with Seller
           </button>
@@ -152,6 +157,26 @@
   const successBanner = document.getElementById('verify-success-banner');
   const btn = document.getElementById('verify-btn');
   const resultSec = document.getElementById('result-section');
+  const codeInput = document.getElementById('verify-code');
+  const sellerWarning = document.getElementById('seller-issue-warning');
+
+  async function checkSellerWarning() {
+    const code = codeInput.value.trim();
+    sellerWarning.classList.add('hidden');
+    if (!code) return;
+    try {
+      const response = await fetch(`/api/orders/referral/${encodeURIComponent(code)}/warning`);
+      if (!response.ok) return;
+      const data = await response.json();
+      if (data.warning && data.message) {
+        sellerWarning.textContent = data.message;
+        sellerWarning.classList.remove('hidden');
+      }
+    } catch { /* The payment verification flow remains available if warning lookup fails. */ }
+  }
+  codeInput.addEventListener('blur', checkSellerWarning);
+  codeInput.addEventListener('input', () => sellerWarning.classList.add('hidden'));
+  if (codeInput.value.trim()) checkSellerWarning();
 
   input.addEventListener('change', () => {
     if (input.files[0]) {
@@ -228,6 +253,9 @@
     // Unique Transaction ID setup
     const txId = result.verification_tx_id || result.order_referral_code || 'TXN-' + Math.random().toString(36).substr(2, 8).toUpperCase();
     document.getElementById('res-verification-txid').textContent = txId;
+
+    const trackBtn = document.getElementById('btn-track-order');
+    if (trackBtn) trackBtn.href = `/buyer.html#claim=${encodeURIComponent(txId)}`;
 
     document.getElementById('btn-copy-txid').onclick = () =>
       copyToClipboard(txId, document.getElementById('btn-copy-txid'));

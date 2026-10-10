@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Track an Order — TrustCheck</title>
+  <meta name="description" content="Check your TrustCheck order status and report an order issue using the private reference shared by your seller.">
+  <link rel="icon" type="image/png" href="/logo.png">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    .buyer-orders-shell { max-width: 900px; margin: 2rem auto; padding: 0 1rem 3rem; }
+    .buyer-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: clamp(1rem, 3vw, 1.5rem); margin-bottom: 1rem; box-shadow: 0 4px 16px rgba(17, 24, 39, .05); }
+    .buyer-choice { display: flex; gap: .65rem; align-items: flex-start; padding: .8rem; border: 1px solid var(--line); border-radius: 10px; margin: .5rem 0; }
+    .buyer-outcome-form { margin-top: .9rem; padding: .9rem; background: #faf9fc; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <main class="buyer-orders-shell">
+    <header class="buyer-header" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;padding:1rem 1.25rem;background:#fff;border:1px solid var(--line);border-radius:var(--radius-lg);margin-bottom:1.25rem;">
+      <a href="/" style="display:flex;align-items:center;gap:.7rem;text-decoration:none;color:inherit;">
+        <img src="/logo.png" alt="TrustCheck" style="width:36px;height:36px;object-fit:contain;">
+        <span><strong>TrustCheck</strong><br><small class="text-muted">Order status &amp; reports</small></span>
+      </a>
+      <a href="/verify.html" class="btn btn-secondary btn-sm">Payment verification</a>
+    </header>
+
+    <div class="alert alert-info" style="margin-bottom:1rem;">
+      Use the private order reference (e.g. <code>TXN-PCFY-4A5K</code>) shared by your seller or from payment verification. A public order number by itself cannot reveal order details.
+    </div>
+
+    <section class="buyer-card">
+      <h1 style="font-size:1.4rem;margin-bottom:.35rem;">Check your order</h1>
+      <p class="text-sm text-muted">Paste your reference ID (e.g. <code>TXN-PCFY-4A5K</code>) or the buyer link to view the order status and report a problem.</p>
+      <form id="order-lookup-form" style="display:flex;gap:.6rem;flex-wrap:wrap;">
+        <label class="form-label" for="buyer-access-code" style="width:100%;">Order reference ID</label>
+        <input class="form-input mono" id="buyer-access-code" placeholder="e.g. TXN-PCFY-4A5K" aria-label="Private order reference" autocomplete="off" required minlength="8" maxlength="100" style="flex:1;min-width:230px;">
+        <button class="btn btn-primary" id="lookup-order-button" type="submit">Find order</button>
+      </form>
+      <div id="lookup-error" class="alert alert-error hidden" role="alert" style="margin-top:.7rem;"></div>
+    </section>
+
+    <section id="order-result" class="hidden" aria-live="polite">
+      <div id="buyer-orders-container"></div>
+      <button class="btn btn-ghost btn-sm" id="clear-order" type="button">Clear order details</button>
+    </section>
+
+    <footer style="text-align:center;font-size:.8rem;color:var(--text-muted);padding:1.5rem 0;">
+      Risk estimate only — not proof of payment. Contact the seller to resolve order issues.
+    </footer>
+  </main>
+  <script src="/js/api.js"></script>
+  <script src="/js/buyer-orders.js"></script>
+</body>
+</html>

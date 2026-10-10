@@ -11,7 +11,7 @@ from __future__ import annotations
 import json
 import logging
 from decimal import Decimal
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
@@ -98,7 +98,8 @@ def _stored_submission_result(submission: PaymentSubmission) -> CrossVerifyResul
         except (TypeError, ValueError):
             reasons = []
 
-    npci_validation = comparison.get("npci_validation")
+    raw_npci = comparison.get("npci_validation")
+    npci_validation: Optional[dict[str, Any]] = raw_npci if isinstance(raw_npci, dict) else None
     risk = RiskResult(
         score=submission.risk_score or 0,
         verdict=submission.risk_verdict or "careful",
@@ -317,9 +318,10 @@ def _compute_risk(
             ))
             score += 10
         elif npci_res.verdict == "valid":
+            j_day = f"{npci_res.decoded_julian_day:03d}" if npci_res.decoded_julian_day is not None else "000"
             reasons.append(RiskReason(
                 level="ok",
-                text=f"[NPCI Rail Audit] Verified NPCI settlement rail (Julian Day {npci_res.decoded_julian_day:03d} -> {npci_res.decoded_date})."
+                text=f"[NPCI Rail Audit] Verified NPCI settlement rail (Julian Day {j_day} -> {npci_res.decoded_date})."
             ))
 
     # Cap score

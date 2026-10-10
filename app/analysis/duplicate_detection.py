@@ -78,7 +78,7 @@ def check_duplicate_reference(
 
     # Check within the configured time window
     if settings.duplicate_window_hours > 0:
-        cutoff = datetime.datetime.utcnow() - datetime.timedelta(
+        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
             hours=settings.duplicate_window_hours
         )
         query = query.filter(PaymentReference.first_seen_at >= cutoff)
@@ -136,7 +136,7 @@ def check_duplicate_screenshot(
 
     if phash:
         # Check perceptual similarity against recent submissions
-        cutoff = datetime.datetime.utcnow() - datetime.timedelta(
+        cutoff = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(
             hours=settings.duplicate_window_hours
         )
         recent = (

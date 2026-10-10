@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import secrets
 from typing import Optional
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -32,6 +33,12 @@ class Settings(BaseSettings):
 
     # Upload
     max_upload_size_mb: int = 5
+    private_upload_dir: str = "private_uploads"
+
+    # Buyer order outcomes
+    order_issue_response_hours: int = Field(default=48, ge=1, le=720)
+    order_issue_warning_threshold: int = Field(default=3, ge=2, le=3)
+    order_issue_warning_window_days: int = Field(default=30, ge=1, le=365)
 
     # Duplicate detection
     phash_similarity_threshold: int = 10

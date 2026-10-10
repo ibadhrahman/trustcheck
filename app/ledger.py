@@ -54,7 +54,7 @@ def append_ledger_entry(
     )
     prev_hash = last.record_hash if last else None
     event_data_str = json.dumps(event_data) if event_data else None
-    now = datetime.datetime.utcnow()
+    now = datetime.datetime.now(datetime.timezone.utc)
 
     # We need the final ID to compute the hash, so flush first
     entry = LedgerEntry(

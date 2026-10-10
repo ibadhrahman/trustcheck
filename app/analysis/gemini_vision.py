@@ -44,51 +44,51 @@ class GeminiPaymentExtraction(BaseModel):
     Strict structured output schema for multimodal payment screenshot analysis.
     """
     amount: Optional[float] = Field(
-        None,
+        default=None,
         description="Exact monetary transaction amount transferred/paid. Must be null if unreadable, ambiguous, or not visible.",
     )
     currency: Optional[str] = Field(
-        "INR",
+        default="INR",
         description="Currency symbol or ISO code, typically 'INR' or '₹'.",
     )
     receiver_name: Optional[str] = Field(
-        None,
+        default=None,
         description="Name of the payee, merchant, or beneficiary receiving funds.",
     )
     receiver_upi_id: Optional[str] = Field(
-        None,
+        default=None,
         description="UPI ID / VPA of payee/receiver if visible (e.g. name@okhdfcbank).",
     )
     transaction_id: Optional[str] = Field(
-        None,
+        default=None,
         description="Specific transaction identifier (e.g. PhonePe T26..., Google Pay Txn ID).",
     )
     utr: Optional[str] = Field(
-        None,
+        default=None,
         description="12-digit UPI reference number or bank UTR.",
     )
     transaction_date: Optional[str] = Field(
-        None,
+        default=None,
         description="Date of payment as displayed (e.g. '09 Oct 2026' or '2026-10-09').",
     )
     transaction_time: Optional[str] = Field(
-        None,
+        default=None,
         description="Time of payment as displayed (e.g. '16:47' or '04:47 PM').",
     )
     payment_app: Optional[str] = Field(
-        None,
+        default=None,
         description="Identified payment app: 'Google Pay', 'PhonePe', 'Paytm', 'BHIM', 'Cred', or other.",
     )
     payment_status_text: Optional[str] = Field(
-        None,
+        default=None,
         description="Exact visible payment status text: 'Completed', 'Payment Successful', 'Paid', etc.",
     )
     payment_perspective: str = Field(
-        "unknown",
+        default="unknown",
         description="'payer' if screenshot represents payment made/debited, 'receiver' if payment received/credited, or 'unknown'.",
     )
     raw_amount_text: Optional[str] = Field(
-        None,
+        default=None,
         description="Exact raw text for amount as displayed on screen, e.g. '₹1,250.00' or '₹10'.",
     )
     field_confidence: GeminiFieldConfidence = Field(

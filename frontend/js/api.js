@@ -123,6 +123,9 @@ const api = {
   cancelOrder: (id) => apiFetch(`/api/orders/${id}/cancel`, { method: 'POST' }),
   confirmPayment: (id) => apiFetch(`/api/orders/${id}/confirm-payment`, { method: 'POST' }),
   markReview: (id) => apiFetch(`/api/orders/${id}/mark-review`, { method: 'POST' }),
+  rotateBuyerAccessCode: (id) => apiFetch(`/api/orders/${id}/buyer-access-code`, { method: 'POST' }),
+  getSellerOutcomes: () => apiFetch('/api/seller/order-outcomes'),
+  offerOrderResolution: (id, body) => apiFetch(`/api/orders/${id}/outcome/offer`, { method: 'POST', body: JSON.stringify(body) }),
 
   // Payments
   analyzeScreenshot: (formData) => apiUpload('/api/payments/analyze', formData),

@@ -438,7 +438,7 @@ def test_seller_history_corrects_old_exif_genuine_verdict(client, test_user, db_
     assert "upi_match" not in record["comparison"]
     db_session.refresh(submission)
     assert submission.risk_verdict == "careful"
-    assert "upi_match" not in submission.comparison_json
+    assert "upi_match" not in (submission.comparison_json or "")
 
 
 def test_extract_payment_fields_patterns():

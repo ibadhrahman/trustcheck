@@ -81,8 +81,8 @@ def _get_rapidocr_engine():
 
 def get_ocr_availability() -> dict:
     return {
-        "deepseek": bool(settings.deepseek_enabled and bool((settings.deepseek_api_key or "").strip())),
-        "gemini": bool(settings.gemini_enabled and bool((settings.gemini_api_key or "").strip())),
+        "deepseek": bool(settings.deepseek_enabled and (settings.deepseek_api_key or "").strip()),
+        "gemini": bool(settings.gemini_enabled and (settings.gemini_api_key or "").strip()),
         "tesseract": _TESSERACT_AVAILABLE,
         "rapidocr": _RAPIDOCR_INSTALLED and not _RAPIDOCR_LOAD_FAILED,
         "pillow": _PIL_AVAILABLE,
@@ -408,8 +408,10 @@ def _ocr_tesseract(img_bytes: bytes) -> Optional[str]:
         img = Image.open(io.BytesIO(img_bytes))
         # PSM 6: assume a uniform block of text (good for UPI screens)
         config = "--oem 3 --psm 6"
-        text = pytesseract.image_to_string(img, config=config, lang="eng")
-        return text
+        raw_text = pytesseract.image_to_string(img, config=config, lang="eng")
+        if isinstance(raw_text, bytes):
+            return raw_text.decode("utf-8", errors="replace")
+        return str(raw_text) if raw_text is not None else None
     except Exception as e:
         logger.warning("Tesseract OCR failed: %s", type(e).__name__)
         return None

@@ -44,6 +44,7 @@ venv.bak/
 
 # Uploads and temporary files
 uploads/
+private_uploads/
 tmp/
 temp/
 *.tmp
@@ -70,6 +71,7 @@ htmlcov/
 # Logs
 *.log
 logs/
+.local-server-8001.err
 
 # Distribution
 dist/

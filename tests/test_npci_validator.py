@@ -29,7 +29,7 @@ def test_impossible_julian_day():
     assert res.is_valid_format is True
     assert res.julian_day_valid is False
     assert res.verdict == "impossible_julian_day"
-    assert "exceeds calendar limits" in res.detail
+    assert "exceeds calendar limits" in (res.detail or "")
 
 
 def test_year_mismatch():

@@ -19,10 +19,27 @@
   // Load recent verifications (seller-only forensic details)
   await loadVerifications();
 
-  // Load activity
+  await loadDashboardActivity(false);
+  window.setInterval(() => {
+    if (document.visibilityState === 'visible') loadDashboardActivity(true);
+  }, 15000);
+})();
+
+let dashboardActivityInitialized = false;
+let knownBuyerIssueEvents = new Set();
+
+async function loadDashboardActivity(notifyOnNewIssue) {
   const activityEl = document.getElementById('activity-list');
+  if (!activityEl) return;
   try {
     const events = await api.dashboardActivity();
+    const issueEvents = events.filter(ev => ev.event_type === 'buyer_problem_reported');
+    const issueKeys = new Set(issueEvents.map(ev => `${ev.entity_id}:${ev.created_at}`));
+    if (dashboardActivityInitialized && notifyOnNewIssue && issueEvents.some(ev => !knownBuyerIssueEvents.has(`${ev.entity_id}:${ev.created_at}`))) {
+      showToast('A buyer reported an order issue. Review it in Orders.', 'warning');
+    }
+    knownBuyerIssueEvents = issueKeys;
+    dashboardActivityInitialized = true;
     if (!events.length) {
       activityEl.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📭</div><h3>No activity yet</h3><p>Create an order or verify a payment to get started.</p></div>';
       return;
@@ -32,7 +49,7 @@
       user_registered: '🎉', user_login: '🔑', order_created: '📋',
       order_cancelled: '❌', payment_verified: '🔍', payment_confirmed_by_seller: '✅',
       order_flagged_for_review: '⚠️', product_created: '📦', certificate_created: '🏆',
-      payment_submitted_by_buyer: '📤',
+      payment_submitted_by_buyer: '📤', buyer_problem_reported: '⚠️',
     };
 
     activityEl.innerHTML = events.map(ev => `
@@ -48,7 +65,7 @@
   } catch (e) {
     activityEl.innerHTML = `<div class="alert alert-error">Could not load activity: ${e.message}</div>`;
   }
-})();
+}
 
 async function loadVerifications() {
   const el = document.getElementById('verifications-list');

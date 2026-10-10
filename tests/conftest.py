@@ -2,6 +2,11 @@
 Pytest fixtures for TrustCheck test suite.
 Uses an isolated in-memory SQLite database.
 """
+import os
+
+# Ensure tests run against isolated in-memory SQLite and never connect to remote databases
+os.environ["DATABASE_URL"] = "sqlite:///:memory:"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine

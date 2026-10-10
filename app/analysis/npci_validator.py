@@ -30,7 +30,7 @@ import calendar
 import logging
 import re
 from datetime import date, datetime, timedelta
-from typing import Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +41,19 @@ logger = logging.getLogger(__name__)
 
 class NPCIValidationResult:
     """Structured result from NPCI Julian-Cycle UTR validation."""
+
+    is_valid_format: Optional[bool]
+    decoded_year_digit: Optional[int]
+    decoded_julian_day: Optional[int]
+    decoded_date: Optional[date]
+    claimed_date: Optional[date]
+    year_match: Optional[bool]
+    julian_day_valid: Optional[bool]
+    date_delta_days: Optional[int]
+    freshness_ok: Optional[bool]
+    verdict: Optional[str]
+    detail: Optional[str]
+    confidence: Optional[float]
 
     __slots__ = (
         "is_valid_format",

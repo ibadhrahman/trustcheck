@@ -42,21 +42,22 @@ def verify_password(plain: str, hashed: str) -> bool:
 _bearer = HTTPBearer(auto_error=True)
 
 
-def create_access_token(user_id: int) -> str:
-    expire = datetime.datetime.utcnow() + datetime.timedelta(
+def create_access_token(user_id: int, actor: str = "seller") -> str:
+    expire = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(
         minutes=settings.access_token_expire_minutes
     )
-    payload = {"sub": str(user_id), "exp": expire}
+    payload = {"sub": str(user_id), "actor": actor, "exp": expire}
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
-def _decode_token(token: str) -> Optional[int]:
+def _decode_token(token: str) -> Optional[tuple[int, str]]:
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
         sub = payload.get("sub")
         if sub is None:
             return None
-        return int(sub)
+        # Tokens created before actor typing remain seller tokens.
+        return int(sub), str(payload.get("actor", "seller"))
     except (JWTError, ValueError):
         return None
 
@@ -69,13 +70,13 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(_bearer),
     db: Session = Depends(get_db),
 ) -> User:
-    user_id = _decode_token(credentials.credentials)
-    if user_id is None:
+    identity = _decode_token(credentials.credentials)
+    if identity is None or identity[1] != "seller":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token.",
         )
-    user = db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    user = db.query(User).filter(User.id == identity[0], User.is_active == True).first()
     if user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -94,7 +95,7 @@ def get_optional_current_user(
     """Dependency for public routes that can optionally accept an authenticated seller."""
     if not credentials:
         return None
-    user_id = _decode_token(credentials.credentials)
-    if user_id is None:
+    identity = _decode_token(credentials.credentials)
+    if identity is None or identity[1] != "seller":
         return None
-    return db.query(User).filter(User.id == user_id, User.is_active == True).first()
+    return db.query(User).filter(User.id == identity[0], User.is_active == True).first()

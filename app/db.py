@@ -4,6 +4,8 @@ All models import Base from here.
 """
 from __future__ import annotations
 
+from typing import Any
+
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
@@ -49,6 +51,73 @@ class Base(DeclarativeBase):
     pass
 
 
+def _upgrade_sqlite_anonymous_outcomes() -> None:
+    """Allow buyer outcomes without accounts while preserving existing SQLite rows."""
+    raw_connection = engine.raw_connection()
+    driver: Any = getattr(raw_connection, "driver_connection", None)
+    if driver is None:
+        raw_connection.close()
+        return
+    foreign_keys_enabled = driver.execute("PRAGMA foreign_keys").fetchone()[0]
+    try:
+        columns = {
+            row[1]: row[3]
+            for row in driver.execute("PRAGMA table_info(order_outcomes)").fetchall()
+        }
+        if not columns or not (columns.get("buyer_id") or columns.get("buyer_received_at")):
+            return
+
+        driver.execute("PRAGMA foreign_keys=OFF")
+        driver.execute("BEGIN IMMEDIATE")
+        driver.execute("""
+            CREATE TABLE order_outcomes_new (
+                id INTEGER NOT NULL PRIMARY KEY,
+                order_id INTEGER NOT NULL UNIQUE REFERENCES orders(id),
+                buyer_id INTEGER REFERENCES buyer_accounts(id),
+                outcome VARCHAR(30) NOT NULL,
+                reason VARCHAR(40),
+                description TEXT,
+                status VARCHAR(30) NOT NULL,
+                reported_at DATETIME,
+                buyer_received_at DATETIME,
+                problem_reported_at DATETIME,
+                response_deadline DATETIME,
+                seller_resolution_type VARCHAR(30),
+                seller_response TEXT,
+                seller_responded_at DATETIME,
+                resolved_at DATETIME
+            )
+        """)
+        driver.execute("""
+            INSERT INTO order_outcomes_new (
+                id, order_id, buyer_id, outcome, reason, description, status,
+                reported_at, buyer_received_at, problem_reported_at,
+                response_deadline, seller_resolution_type, seller_response,
+                seller_responded_at, resolved_at
+            )
+            SELECT
+                id, order_id, buyer_id, outcome, reason, description, status,
+                reported_at, buyer_received_at, problem_reported_at,
+                response_deadline, seller_resolution_type, seller_response,
+                seller_responded_at, resolved_at
+            FROM order_outcomes
+        """)
+        driver.execute("DROP TABLE order_outcomes")
+        driver.execute("ALTER TABLE order_outcomes_new RENAME TO order_outcomes")
+        driver.execute("CREATE INDEX ix_order_outcomes_id ON order_outcomes (id)")
+        driver.execute("CREATE INDEX ix_order_outcomes_buyer ON order_outcomes (buyer_id)")
+        driver.execute("CREATE INDEX ix_order_outcomes_status ON order_outcomes (status)")
+        driver.commit()
+    except Exception:
+        driver.rollback()
+        raise
+    finally:
+        try:
+            driver.execute(f"PRAGMA foreign_keys={1 if foreign_keys_enabled else 0}")
+        finally:
+            raw_connection.close()
+
+
 def get_db():
     """FastAPI dependency: yields a database session."""
     db = SessionLocal()
@@ -79,6 +148,25 @@ def init_db() -> None:
                     conn.execute(text(
                         f"ALTER TABLE payment_submissions ADD COLUMN {column_name} {column_type}"
                     ))
+            order_cols = {
+                row[1] for row in conn.execute(text("PRAGMA table_info(orders)")).fetchall()
+            }
+            if "buyer_id" not in order_cols:
+                conn.execute(text(
+                    "ALTER TABLE orders ADD COLUMN buyer_id INTEGER REFERENCES buyer_accounts(id)"
+                ))
+            if "buyer_access_hmac" not in order_cols:
+                conn.execute(text("ALTER TABLE orders ADD COLUMN buyer_access_hmac VARCHAR(64)"))
+            outcome_cols = {
+                row[1] for row in conn.execute(text("PRAGMA table_info(order_outcomes)")).fetchall()
+            }
+            if outcome_cols and "buyer_received_at" not in outcome_cols:
+                conn.execute(text("ALTER TABLE order_outcomes ADD COLUMN buyer_received_at DATETIME"))
+                conn.execute(text("UPDATE order_outcomes SET buyer_received_at = reported_at WHERE buyer_received_at IS NULL"))
+            conn.execute(text(
+                "CREATE UNIQUE INDEX IF NOT EXISTS ix_orders_buyer_access_hmac ON orders (buyer_access_hmac)"
+            ))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_buyer_id ON orders (buyer_id)"))
         elif engine.dialect.name == "postgresql":
             # Apply the compatibility columns in one round trip to hosted Postgres.
             conn.execute(text("""
@@ -88,9 +176,20 @@ def init_db() -> None:
                     ALTER TABLE public.payment_submissions ADD COLUMN IF NOT EXISTS forensics_json TEXT;
                     ALTER TABLE public.payment_submissions ADD COLUMN IF NOT EXISTS duplicate_json TEXT;
                     ALTER TABLE public.payment_submissions ADD COLUMN IF NOT EXISTS comparison_json TEXT;
+                    ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS buyer_id INTEGER REFERENCES public.buyer_accounts(id);
+                    ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS buyer_access_hmac VARCHAR(64);
+                    ALTER TABLE public.order_outcomes ADD COLUMN IF NOT EXISTS buyer_received_at TIMESTAMP WITHOUT TIME ZONE;
+                    UPDATE public.order_outcomes SET buyer_received_at = reported_at WHERE buyer_received_at IS NULL;
+                    ALTER TABLE public.order_outcomes ALTER COLUMN buyer_id DROP NOT NULL;
+                    ALTER TABLE public.order_outcomes ALTER COLUMN buyer_received_at DROP NOT NULL;
                 END;
                 $trustcheck_schema$;
             """))
+            conn.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_orders_buyer_access_hmac ON public.orders (buyer_access_hmac)"))
+            conn.execute(text("CREATE INDEX IF NOT EXISTS ix_orders_buyer_id ON public.orders (buyer_id)"))
+
+    if engine.dialect.name == "sqlite":
+        _upgrade_sqlite_anonymous_outcomes()
 
     _secure_supabase_tables()
 

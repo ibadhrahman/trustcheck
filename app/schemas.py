@@ -180,8 +180,79 @@ class OrderOut(BaseModel):
     created_at: datetime.datetime
     referral_code: Optional[str] = None
     shareable_message: Optional[str] = None
+    # Only populated on order creation or explicit seller rotation; never on list/get.
+    buyer_access_code: Optional[str] = None
+    outcome_status: Optional[str] = None
 
     model_config = {"from_attributes": True}
+
+
+class BuyerOrderLookup(BaseModel):
+    access_code: str = Field(max_length=100)
+
+
+class BuyerAccessCodeOut(BaseModel):
+    access_code: str
+
+
+class BuyerOutcomeEventOut(BaseModel):
+    event_type: str
+    actor_type: str
+    message: Optional[str]
+    resolution_type: Optional[str]
+    created_at: datetime.datetime
+    evidence_ids: list[int] = []
+
+
+class OrderOutcomeOut(BaseModel):
+    id: int
+    order_id: int
+    outcome: str
+    reason: Optional[str]
+    description: Optional[str]
+    status: str
+    reported_at: datetime.datetime
+    buyer_received_at: Optional[datetime.datetime]
+    response_deadline: Optional[datetime.datetime]
+    seller_resolution_type: Optional[str]
+    seller_response: Optional[str]
+    seller_responded_at: Optional[datetime.datetime]
+    resolved_at: Optional[datetime.datetime]
+    events: list[BuyerOutcomeEventOut]
+
+
+class BuyerOrderOut(BaseModel):
+    id: int
+    referral_code: Optional[str]
+    item: Optional[str]
+    quantity: int
+    expected_amount: float
+    seller_name: Optional[str]
+    status: str
+    can_submit_outcome: bool
+    outcome: Optional[OrderOutcomeOut]
+
+
+class SellerOrderOutcomeOut(OrderOutcomeOut):
+    referral_code: Optional[str]
+    item: Optional[str]
+    expected_amount: float
+    customer_label: Optional[str]
+
+
+class SellerResolutionOffer(BaseModel):
+    resolution_type: str = Field(pattern="^(replacement|refund|other)$")
+    message: Optional[str] = Field(None, max_length=2000)
+
+
+class BuyerResolutionDecision(BaseModel):
+    resolved: bool
+    message: Optional[str] = Field(None, max_length=2000)
+
+
+class SellerWarningOut(BaseModel):
+    warning: bool
+    message: Optional[str] = None
 
 
 # ---------------------------------------------------------------------------

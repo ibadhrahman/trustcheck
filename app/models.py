@@ -25,7 +25,7 @@ from app.db import Base
 
 
 def _now() -> datetime.datetime:
-    return datetime.datetime.utcnow()
+    return datetime.datetime.now(datetime.timezone.utc)
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +50,19 @@ class User(Base):
         "SellerReferralCode", back_populates="seller", uselist=False
     )
     audit_events: Mapped[list["AuditEvent"]] = relationship("AuditEvent", back_populates="user")
+
+
+class BuyerAccount(Base):
+    """Buyer identity used to claim private orders and submit outcomes."""
+    __tablename__ = "buyer_accounts"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now)
+
+    orders: Mapped[list["Order"]] = relationship("Order", back_populates="buyer")
+    outcomes: Mapped[list["OrderOutcome"]] = relationship("OrderOutcome", back_populates="buyer")
 
 
 class SellerProfile(Base):
@@ -176,6 +189,9 @@ class Order(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     seller_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    buyer_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("buyer_accounts.id"))
+    # HMAC of the private buyer order reference; plaintext is returned to the seller once.
+    buyer_access_hmac: Mapped[Optional[str]] = mapped_column(String(64), unique=True, index=True)
     product_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("products.id"))
     quantity: Mapped[int] = mapped_column(Integer, default=1)
     expected_amount: Mapped[float] = mapped_column(Float, nullable=False)
@@ -192,6 +208,7 @@ class Order(Base):
     updated_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now, onupdate=_now)
 
     seller: Mapped["User"] = relationship("User", back_populates="orders")
+    buyer: Mapped[Optional["BuyerAccount"]] = relationship("BuyerAccount", back_populates="orders")
     product: Mapped[Optional["Product"]] = relationship("Product", back_populates="orders")
     referral_code: Mapped[Optional["OrderReferralCode"]] = relationship(
         "OrderReferralCode", back_populates="order", uselist=False
@@ -199,8 +216,74 @@ class Order(Base):
     payment_submissions: Mapped[list["PaymentSubmission"]] = relationship(
         "PaymentSubmission", back_populates="order"
     )
+    outcome: Mapped[Optional["OrderOutcome"]] = relationship(
+        "OrderOutcome", back_populates="order", uselist=False
+    )
 
     __table_args__ = (Index("ix_orders_seller", "seller_id"),)
+
+
+class OrderOutcome(Base):
+    """Current buyer outcome and private issue details for one order."""
+    __tablename__ = "order_outcomes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    order_id: Mapped[int] = mapped_column(ForeignKey("orders.id"), unique=True, nullable=False)
+    # Nullable for reports made with the private order reference and no buyer account.
+    buyer_id: Mapped[Optional[int]] = mapped_column(ForeignKey("buyer_accounts.id"))
+    outcome: Mapped[str] = mapped_column(String(30), nullable=False)  # received | problem
+    reason: Mapped[Optional[str]] = mapped_column(String(40))
+    description: Mapped[Optional[str]] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(30), nullable=False)  # received | awaiting_seller | resolution_offered | resolved
+    reported_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now)
+    buyer_received_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    problem_reported_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    response_deadline: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    seller_resolution_type: Mapped[Optional[str]] = mapped_column(String(30))
+    seller_response: Mapped[Optional[str]] = mapped_column(Text)
+    seller_responded_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+    resolved_at: Mapped[Optional[datetime.datetime]] = mapped_column(DateTime)
+
+    order: Mapped["Order"] = relationship("Order", back_populates="outcome")
+    buyer: Mapped[Optional["BuyerAccount"]] = relationship("BuyerAccount", back_populates="outcomes")
+    events: Mapped[list["OrderOutcomeEvent"]] = relationship(
+        "OrderOutcomeEvent", back_populates="outcome", order_by="OrderOutcomeEvent.created_at"
+    )
+
+    __table_args__ = (Index("ix_order_outcomes_buyer", "buyer_id"), Index("ix_order_outcomes_status", "status"))
+
+
+class OrderOutcomeEvent(Base):
+    """Append-only history of buyer reports, seller offers, and buyer decisions."""
+    __tablename__ = "order_outcome_events"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    outcome_id: Mapped[int] = mapped_column(ForeignKey("order_outcomes.id"), nullable=False)
+    actor_type: Mapped[str] = mapped_column(String(20), nullable=False)  # buyer | seller
+    actor_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    event_type: Mapped[str] = mapped_column(String(40), nullable=False)
+    resolution_type: Mapped[Optional[str]] = mapped_column(String(30))
+    message: Mapped[Optional[str]] = mapped_column(Text)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now)
+
+    outcome: Mapped["OrderOutcome"] = relationship("OrderOutcome", back_populates="events")
+    evidence: Mapped[list["OrderOutcomeEvidence"]] = relationship(
+        "OrderOutcomeEvidence", back_populates="event"
+    )
+
+
+class OrderOutcomeEvidence(Base):
+    """Private, normalized product/report images; accessible only to order parties."""
+    __tablename__ = "order_outcome_evidence"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    event_id: Mapped[int] = mapped_column(ForeignKey("order_outcome_events.id"), nullable=False)
+    storage_key: Mapped[str] = mapped_column(String(80), unique=True, nullable=False)
+    mime_type: Mapped[str] = mapped_column(String(50), nullable=False)
+    file_size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=_now)
+
+    event: Mapped["OrderOutcomeEvent"] = relationship("OrderOutcomeEvent", back_populates="evidence")
 
 
 # ---------------------------------------------------------------------------

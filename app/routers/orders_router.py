@@ -14,17 +14,19 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.db import get_db
 from app.models import AuditEvent, Order, OrderReferralCode, Product, User
+from app.outcome_utils import buyer_access_fingerprint, new_buyer_access_code, seller_has_warning
 from app.referral_codes import (
     build_shareable_message,
     create_order_referral_code,
     resolve_order_referral_code,
+    resolve_seller_referral_code,
 )
-from app.schemas import OrderCreate, OrderOut, ReferralCodeOut
+from app.schemas import BuyerAccessCodeOut, OrderCreate, OrderOut, SellerWarningOut
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
 
-def _build_order_out(order: Order) -> OrderOut:
+def _build_order_out(order: Order, buyer_access_code: str | None = None) -> OrderOut:
     code_str = order.referral_code.code if order.referral_code else None
     shareable = (
         build_shareable_message(
@@ -49,6 +51,8 @@ def _build_order_out(order: Order) -> OrderOut:
         created_at=order.created_at,
         referral_code=code_str,
         shareable_message=shareable,
+        buyer_access_code=buyer_access_code,
+        outcome_status=order.outcome.status if order.outcome else None,
     )
 
 
@@ -86,6 +90,16 @@ def create_order(
         private_note=payload.private_note,
         status="pending",
     )
+    buyer_access_code = ""
+    for _ in range(10):
+        candidate_code = new_buyer_access_code()
+        candidate_hmac = buyer_access_fingerprint(candidate_code)
+        if not db.query(Order).filter(Order.buyer_access_hmac == candidate_hmac).first():
+            buyer_access_code = candidate_code
+            order.buyer_access_hmac = candidate_hmac
+            break
+    else:
+        raise RuntimeError("Failed to generate unique buyer access code.")
     db.add(order)
     db.flush()
 
@@ -100,7 +114,7 @@ def create_order(
     ))
     db.commit()
     db.refresh(order)
-    return _build_order_out(order)
+    return _build_order_out(order, buyer_access_code=buyer_access_code)
 
 
 @router.get("", response_model=list[OrderOut])
@@ -137,6 +151,65 @@ def get_order_by_referral(
 
     order = orc.order
     return _build_order_out(order)
+
+
+@router.get("/referral/{referral_code}/warning", response_model=SellerWarningOut)
+def get_seller_warning(referral_code: str, db: Session = Depends(get_db)):
+    """Return only a neutral aggregate warning; never report or buyer details."""
+    order_code = resolve_order_referral_code(db, referral_code)
+    if order_code:
+        seller_id = order_code.seller_id
+    else:
+        seller_code = resolve_seller_referral_code(db, referral_code)
+        if not seller_code:
+            return SellerWarningOut(warning=False)
+        seller_id = seller_code.seller_id
+
+    warning = seller_has_warning(db, seller_id)
+    return SellerWarningOut(
+        warning=warning,
+        message=(
+            "Multiple unresolved order issues have been reported. Review before purchasing."
+            if warning else None
+        ),
+    )
+
+
+@router.post("/{order_id}/buyer-access-code", response_model=BuyerAccessCodeOut)
+def rotate_buyer_access_code(
+    order_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    order = db.query(Order).filter(
+        Order.id == order_id, Order.seller_id == current_user.id
+    ).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found.")
+    if order.outcome and order.outcome.outcome == "problem":
+        raise HTTPException(
+            status_code=409,
+            detail="The buyer reference cannot be rotated after an issue report is filed.",
+        )
+    access_code = ""
+    for _ in range(10):
+        candidate_code = new_buyer_access_code()
+        candidate_hmac = buyer_access_fingerprint(candidate_code)
+        if not db.query(Order).filter(Order.buyer_access_hmac == candidate_hmac).first():
+            access_code = candidate_code
+            order.buyer_access_hmac = candidate_hmac
+            break
+    else:
+        raise RuntimeError("Failed to generate unique buyer access code.")
+    db.add(AuditEvent(
+        user_id=current_user.id,
+        event_type="buyer_access_code_rotated",
+        entity_type="order",
+        entity_id=order.id,
+        detail="A private buyer order reference was rotated.",
+    ))
+    db.commit()
+    return BuyerAccessCodeOut(access_code=access_code)
 
 
 @router.get("/{order_id}", response_model=OrderOut)

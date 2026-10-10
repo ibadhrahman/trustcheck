@@ -50,7 +50,7 @@ def phash_distance(h1: str, h2: str) -> Optional[int]:
     try:
         ih1 = imagehash.hex_to_hash(h1)
         ih2 = imagehash.hex_to_hash(h2)
-        return ih1 - ih2
+        return int(ih1 - ih2)
     except Exception:
         return None
 

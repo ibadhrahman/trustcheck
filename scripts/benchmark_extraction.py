@@ -12,8 +12,9 @@ from decimal import Decimal
 # Ensure project root is in sys.path and stdout handles UTF-8
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 if sys.platform == "win32":
-    import codecs
-    sys.stdout = codecs.getwriter("utf-8")(sys.stdout.detach())
+    reconfigure_fn = getattr(sys.stdout, "reconfigure", None)
+    if callable(reconfigure_fn):
+        reconfigure_fn(encoding="utf-8")
 
 from PIL import Image, ImageDraw
 
