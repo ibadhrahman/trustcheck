@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TrustCheck — Fraud Prevention & Payment Verification for Social Commerce</title>
-  <link rel="icon" type="image/png" href="/logo.png">
-  <link rel="shortcut icon" href="/favicon.ico">
-  <meta name="description" content="TrustCheck protects social commerce merchants and chat-based buyers on Instagram and WhatsApp with AI-powered payment screenshot verification, duplicate UTR detection, and tamper analysis.">
+  <title>TrustCheck — Sell with confidence</title>
+    <link rel="icon" type="image/png" href="/logo.png">
+  <meta name="description" content="TrustCheck helps Instagram and WhatsApp sellers verify orders, payment screenshots, and certified product photos.">
   <link rel="stylesheet" href="/css/styles.css">
   <style>
     .container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; }
@@ -274,33 +273,10 @@
         <a href="#limitations" style="font-weight:600;font-size:0.92rem;color:#111827;">Limitations</a>
         <a href="#contact" style="font-weight:600;font-size:0.92rem;color:#111827;">Contact</a>
       </div>
-      <div style="display:flex;gap:0.75rem;align-items:center;" class="nav-cta">
+      <div style="display:flex;gap:0.75rem;align-items:center;">
         <button type="button" class="button button-primary btn-get-started" style="font-size:0.85rem;cursor:pointer;">Get started</button>
       </div>
-      <button type="button" class="landing-menu-toggle" id="landing-menu-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
-        <span class="hamburger-bar"></span>
-        <span class="hamburger-bar"></span>
-        <span class="hamburger-bar"></span>
-      </button>
     </nav>
-    <div class="landing-mobile-menu" id="landing-mobile-menu" aria-hidden="true">
-      <div class="mobile-menu-links">
-        <a href="#features" class="mobile-menu-link">✨ Features</a>
-        <a href="#how-it-works" class="mobile-menu-link">⚙️ How it works</a>
-        <a href="#limitations" class="mobile-menu-link">🛡️ Limitations</a>
-        <a href="#contact" class="mobile-menu-link">📬 Contact & Support</a>
-        <div class="mobile-menu-divider"></div>
-        <a href="/buyer.html" class="mobile-menu-link">📦 Buyer Order Updates</a>
-        <a href="/verify.html" class="mobile-menu-link">🛍️ Payment Verification</a>
-        <a href="/login.html" class="mobile-menu-link">🚪 Seller Sign In</a>
-        <div class="mobile-menu-divider"></div>
-        <a href="tel:+919876543210" class="mobile-menu-link" style="color:var(--text-link);">📞 Helpline: +91 98765 43210</a>
-        <a href="mailto:trustcheck@gmail.com" class="mobile-menu-link" style="color:var(--text-link);">✉️ trustcheck@gmail.com</a>
-        <div style="padding-top:0.5rem;">
-          <button type="button" class="button button-primary btn-get-started w-full" style="justify-content:center;">Get started</button>
-        </div>
-      </div>
-    </div>
   </header>
 
   <!-- Hero -->
@@ -498,16 +474,6 @@
               <span>trustcheck@gmail.com</span>
             </span>
           </a>
-          <!-- Helpline Phone -->
-          <a href="tel:+919876543210" class="cs-action" aria-label="Call TrustCheck Helpline at +91 98765 43210">
-            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
-            </svg>
-            <span class="cs-action-meta">
-              <span>Helpline</span>
-              <span>+91 98765 43210</span>
-            </span>
-          </a>
         </div>
       </div>
 
@@ -681,33 +647,6 @@
             buyerCard.classList.remove('is-active-role');
             sellerCard.classList.add('is-active-role');
             if (switcherLabel) switcherLabel.textContent = 'Switch to Buyer →';
-          }
-        });
-      // Mobile menu toggle
-      const mobileToggle = document.getElementById('landing-menu-toggle');
-      const mobileMenu = document.getElementById('landing-mobile-menu');
-      if (mobileToggle && mobileMenu) {
-        mobileToggle.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const isOpen = mobileMenu.classList.toggle('is-open');
-          mobileToggle.classList.toggle('is-active', isOpen);
-          mobileToggle.setAttribute('aria-expanded', String(isOpen));
-          mobileMenu.setAttribute('aria-hidden', String(!isOpen));
-        });
-        mobileMenu.querySelectorAll('a, button').forEach(link => {
-          link.addEventListener('click', () => {
-            mobileMenu.classList.remove('is-open');
-            mobileToggle.classList.remove('is-active');
-            mobileToggle.setAttribute('aria-expanded', 'false');
-            mobileMenu.setAttribute('aria-hidden', 'true');
-          });
-        });
-        document.addEventListener('click', (e) => {
-          if (!mobileMenu.contains(e.target) && !mobileToggle.contains(e.target) && mobileMenu.classList.contains('is-open')) {
-            mobileMenu.classList.remove('is-open');
-            mobileToggle.classList.remove('is-active');
-            mobileToggle.setAttribute('aria-expanded', 'false');
-            mobileMenu.setAttribute('aria-hidden', 'true');
           }
         });
       }

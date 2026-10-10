@@ -25,10 +25,10 @@
     const mobileBar = document.querySelector('.mobile-nav-bar');
     if (mobileBar) {
       mobileBar.innerHTML = `
-        <a href="/" style="display:flex;align-items:center;gap:0.6rem;text-decoration:none;color:inherit;" aria-label="TrustCheck home">
-          <img src="/logo.png" alt="TrustCheck" style="width:28px;height:28px;object-fit:contain;border-radius:6px;">
+        <div style="display:flex;align-items:center;gap:0.6rem;">
+          <div class="logo-icon">TC</div>
           <div class="logo-text">TrustCheck</div>
-        </a>
+        </div>
         <div style="margin-left:auto;"><a href="/login.html" class="btn btn-ghost btn-sm">Seller Sign In</a></div>
       `;
     }

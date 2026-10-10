@@ -8,11 +8,9 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import settings
 from app.db import init_db
@@ -100,57 +98,23 @@ def health():
 
 @app.get("/scam-checker.html")
 def redirect_scam_checker():
+    from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/dashboard.html", status_code=301)
 
 
 @app.get("/products.html")
 def redirect_products():
+    from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/dashboard.html", status_code=301)
 
 
 # ---------------------------------------------------------------------------
-# Static frontend & Custom 404
+# Static frontend
 # ---------------------------------------------------------------------------
 
 _FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
-
-
-@app.get("/favicon.ico", include_in_schema=False)
-def favicon():
-    fav_path = _FRONTEND_DIR / "favicon.ico"
-    if fav_path.exists():
-        return FileResponse(fav_path, media_type="image/x-icon")
-    logo_path = _FRONTEND_DIR / "logo.png"
-    return FileResponse(logo_path, media_type="image/png")
-
-
-@app.get("/404.html", include_in_schema=False)
-def get_404_page():
-    page_404 = _FRONTEND_DIR / "404.html"
-    if page_404.exists():
-        return FileResponse(page_404, status_code=404)
-    return JSONResponse({"detail": "Page not found"}, status_code=404)
-
-
-@app.exception_handler(StarletteHTTPException)
-async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
-    if exc.status_code == 404:
-        if request.url.path.startswith("/api/"):
-            return JSONResponse({"detail": exc.detail or "Not Found"}, status_code=404)
-        page_404 = _FRONTEND_DIR / "404.html"
-        if page_404.exists():
-            return FileResponse(page_404, status_code=404)
-    return JSONResponse({"detail": exc.detail}, status_code=exc.status_code)
-
-
-@app.api_route("/api/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
-def api_not_found(path: str):
-    return JSONResponse(status_code=404, content={"detail": "Not Found"})
-
-
 if _FRONTEND_DIR.exists():
     app.mount("/", StaticFiles(directory=str(_FRONTEND_DIR), html=True), name="frontend")
-
 
 
 # ---------------------------------------------------------------------------
