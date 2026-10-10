@@ -53,7 +53,7 @@ Key capabilities:
 │  3. Image Forensics  (SHA-256, pHash, ELA, EXIF)                    │
 │  4. HMAC-SHA256 Anti-Replay Deduplication Engine                    │
 │  5. Hash-Linked Append-Only Audit Ledger                            │
-│  6. PostgreSQL (Supabase cloud) / SQLite (local development)         │
+│  6. PostgreSQL (Supabase cloud) / SQLite (local development)        │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
