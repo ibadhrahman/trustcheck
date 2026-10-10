@@ -3,7 +3,7 @@
  * All requests attach the JWT Authorization header automatically.
  */
 
-const API_BASE = '';  // Same origin — backend serves frontend
+const API_BASE = 'https://trustcheck-47gh.onrender.com';;  // Same origin — backend serves frontend
 
 /** Read token from localStorage */
 function getToken() {
